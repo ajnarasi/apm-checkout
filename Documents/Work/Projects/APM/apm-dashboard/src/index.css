@@ -1,18 +1,58 @@
 :root {
-  --bg: #0a0a0a;
-  --bg-card: #141414;
-  --bg-hover: #1a1a1a;
-  --border: #2a2a2a;
-  --text: #e0e0e0;
-  --text-muted: #888;
-  --accent: #6C63FF;
-  --accent-hover: #5a52d5;
-  --pass: #4caf50;
-  --fail: #f44336;
-  --warn: #ff9800;
-  color-scheme: dark;
+  /* Benkuy-inspired warm palette: cream backgrounds, black cards, yellow accent */
+  --bg: #f0ebe3;
+  --bg-main: #f5f0e8;
+  --bg-card: #ffffff;
+  --bg-surface: #e8e2d8;
+  --bg-dark: #1a1a1a;
+  --bg-sidebar: #1a1a1a;
+  --bg-sidebar-hover: #2a2a2a;
+  --bg-sidebar-active: #333333;
+  --bg-hero: linear-gradient(135deg, #f5f0e8 0%, #e8e2d8 100%);
+  --border: #d4cdc0;
+  --border-light: #e0d9cc;
+  --text: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #7a7a7a;
+  --text-dim: #999999;
+  --text-on-dark: #f0ebe3;
+  --text-on-dark-muted: #b0a898;
+  --accent: #e8c832;
+  --accent-hover: #d4b82e;
+  --accent-bg: rgba(232,200,50,0.1);
+  --accent-border: rgba(232,200,50,0.3);
+  --green: #22c55e;
+  --green-bg: rgba(34,197,94,0.08);
+  --green-border: rgba(34,197,94,0.2);
+  --pass: #22c55e;
+  --pass-light: rgba(34,197,94,0.08);
+  --orange: #f59e0b;
+  --orange-bg: rgba(245,158,11,0.08);
+  --orange-border: rgba(245,158,11,0.2);
+  --amber: #f59e0b;
+  --amber-light: rgba(245,158,11,0.08);
+  --red: #ef4444;
+  --fail: #ef4444;
+  --fail-light: rgba(239,68,68,0.06);
+  --blue: #3b82f6;
+  --blue-bg: rgba(59,130,246,0.08);
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --warn: #f59e0b;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --sidebar-width: 230px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  color: var(--text);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; margin: 0; }
-#root { max-width: 100%; margin: 0; text-align: left; }
-code { background: #222; padding: 1px 6px; border-radius: 3px; font-size: 0.85em; font-family: ui-monospace, Consolas, monospace; }
+body { background: var(--bg-main); color: var(--text); }
+#root { display: flex; min-height: 100vh; }
+code { background: rgba(26,26,26,0.06); color: var(--text); padding: 1px 6px; border-radius: 4px; font-size: 0.85em; font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+/* Override code color inside dark containers */
+.code-block code, .yaml-code code, .json-viewer code { color: #e2e8f0; background: none; }
+a { color: var(--text); text-decoration: underline; }

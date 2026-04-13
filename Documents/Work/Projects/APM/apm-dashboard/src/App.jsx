@@ -1,27 +1,20 @@
 import { useState } from 'react';
+import Sidebar from './components/Sidebar';
+import Overview from './components/Overview';
 import ConfigPanel from './components/ConfigPanel';
 import MappingTable from './components/MappingTable';
 import DeliverableViewer from './components/DeliverableViewer';
 import TestMatrix from './components/TestMatrix';
 import AdapterChain from './components/AdapterChain';
+import SwaggerView from './components/SwaggerView';
+import AuthFlowDiagram from './components/AuthFlowDiagram';
 import { APMS } from './data/apmList';
 import './App.css';
 
 const API = 'http://localhost:3848/api';
-const TABS = [
-  { id: 'chain', label: 'Chain' },
-  { id: 'mapping', label: 'Mapping' },
-  { id: 'prd', label: 'PRD' },
-  { id: 'adapter', label: 'Adapter' },
-  { id: 'config', label: 'Config' },
-  { id: 'fixtures', label: 'Fixtures' },
-  { id: 'safety', label: 'Safety' },
-  { id: 'unmappable', label: 'Unmappable' },
-  { id: 'matrix', label: 'E2E Matrix' },
-];
 
 function App() {
-  const [activeTab, setActiveTab] = useState('chain');
+  const [activePage, setActivePage] = useState('overview');
   const [config, setConfig] = useState({
     apm: 'IDEAL', platform: 'all', provider: 'ppro',
     capabilities: ['auth', 'capture']
@@ -32,47 +25,42 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [matrixRunning, setMatrixRunning] = useState(false);
 
+  const selectedApm = APMS.find(a => a.code === config.apm);
+
   const handleGenerate = async () => {
     setLoading(true);
     try {
       const resp = await fetch(`${API}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...config,
-          country: selectedApm?.country,
-          currency: selectedApm?.currency
-        })
+        body: JSON.stringify({ ...config, country: selectedApm?.country, currency: selectedApm?.currency })
       });
-      const data = await resp.json();
-      setDeliverables(data);
+      setDeliverables(await resp.json());
     } catch (err) { console.error(err); }
     setLoading(false);
   };
 
   const handleTest = async () => {
     setLoading(true);
-    const apmData = APMS.find(a => a.code === config.apm);
     try {
       const resp = await fetch(`${API}/test/sandbox`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           apm: config.apm, provider: config.provider,
-          amount: 10.00, currency: apmData?.currency || 'USD',
-          country: apmData?.country || 'US'
+          amount: 10.00, currency: selectedApm?.currency || 'USD',
+          country: selectedApm?.country || 'US'
         })
       });
-      const data = await resp.json();
-      setTestResult(data);
-      setActiveTab('chain');
+      setTestResult(await resp.json());
+      setActivePage('chain');
     } catch (err) { console.error(err); }
     setLoading(false);
   };
 
   const handleRunMatrix = async () => {
     setMatrixRunning(true);
-    setActiveTab('matrix');
+    setActivePage('matrix');
     try {
       const resp = await fetch(`${API}/test/matrix`, {
         method: 'POST',
@@ -85,36 +73,62 @@ function App() {
     setMatrixRunning(false);
   };
 
-  const selectedApm = APMS.find(a => a.code === config.apm);
+  // Pages that need the config panel with generate/test buttons
+  const generatePages = ['mapping', 'prd', 'adapter', 'config', 'fixtures', 'safety', 'unmappable'];
+  const showGenerateConfig = generatePages.includes(activePage);
 
   return (
     <div className="app">
-      <header className="header">
-        <h1>APM Mapping Dashboard</h1>
-        <span className="subtitle">Commerce Hub — Alternative Payment Method Integration Engine | 52 APMs | 4 Regions | 18 Currencies</span>
-      </header>
+      <Sidebar activePage={activePage} onNavigate={setActivePage} />
 
-      <ConfigPanel config={config} onChange={setConfig} onGenerate={handleGenerate} onTest={handleTest} loading={loading} />
+      <div className="main-content">
+        {activePage === 'overview' && <Overview />}
 
-      <div className="tabs">
-        {TABS.map(tab => (
-          <button key={tab.id} className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
+        {/* JTBD removed — covered in Overview */}
 
-      <div className="content">
-        {activeTab === 'chain' && <AdapterChain apm={selectedApm} platform={config.platform} provider={config.provider} testResult={testResult} />}
-        {activeTab === 'mapping' && <MappingTable data={deliverables?.mapping} />}
-        {activeTab === 'prd' && <DeliverableViewer content={deliverables?.prd} type="markdown" title="PRD" />}
-        {activeTab === 'adapter' && <DeliverableViewer content={deliverables?.adapterSpec} type="markdown" title={`Adapter Spec — ${config.platform === 'all' ? 'Ucom' : config.platform}`} />}
-        {activeTab === 'config' && <DeliverableViewer content={deliverables?.config} type="json" title="config.json" />}
-        {activeTab === 'fixtures' && <DeliverableViewer content={deliverables?.testFixtures} type="json" title="test-fixtures.json" />}
-        {activeTab === 'safety' && <DeliverableViewer content={deliverables?.safetyCheck} type="markdown" title="Safety Check Report" />}
-        {activeTab === 'unmappable' && <DeliverableViewer content={deliverables?.unmappableFields} type="markdown" title="Unmappable Fields" />}
-        {activeTab === 'matrix' && <TestMatrix results={matrixResults} onRunMatrix={handleRunMatrix} running={matrixRunning} />}
+        {activePage === 'swagger' && (
+          <div className="page">
+            <SwaggerView />
+          </div>
+        )}
+
+        {activePage === 'matrix' && (
+          <div className="page">
+            <h3 className="md-h3" style={{ marginBottom: 16 }}>E2E Test Matrix</h3>
+            <TestMatrix results={matrixResults} onRunMatrix={handleRunMatrix} running={matrixRunning} />
+          </div>
+        )}
+
+        {activePage === 'chain' && (
+          <div className="page">
+            <ConfigPanel config={config} onChange={setConfig} onGenerate={handleGenerate} onTest={handleTest} loading={loading} hideActions />
+            <AdapterChain apm={selectedApm} platform={config.platform} provider={selectedApm?.provider || config.provider} testResult={testResult} />
+            <div style={{ marginTop: 16 }}>
+              <button className="btn success" onClick={handleTest} disabled={loading}>
+                {loading ? 'Testing...' : 'Test Sandbox'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showGenerateConfig && (
+          <div className="page">
+            <ConfigPanel config={config} onChange={setConfig} onGenerate={handleGenerate} onTest={handleTest} loading={loading} />
+
+            {activePage === 'mapping' && <MappingTable data={deliverables?.mapping} />}
+            {activePage === 'prd' && <DeliverableViewer content={deliverables?.prd} type="markdown" title="Product Requirements Document" />}
+            {activePage === 'adapter' && (
+              <>
+                <AuthFlowDiagram apm={selectedApm} provider={selectedApm?.provider || config.provider} capabilities={config.capabilities} />
+                <DeliverableViewer content={deliverables?.adapterSpec} type="markdown" title={`Adapter Spec — ${config.platform === 'all' ? 'Ucom' : config.platform}`} />
+              </>
+            )}
+            {activePage === 'config' && <DeliverableViewer content={deliverables?.config} type="json" title="config.json" />}
+            {activePage === 'fixtures' && <DeliverableViewer content={deliverables?.testFixtures} type="json" title="test-fixtures.json" />}
+            {activePage === 'safety' && <DeliverableViewer content={deliverables?.safetyCheck} type="markdown" title="Safety Check Report" />}
+            {activePage === 'unmappable' && <DeliverableViewer content={deliverables?.unmappableFields} type="markdown" title="Unmappable Fields" />}
+          </div>
+        )}
       </div>
     </div>
   );

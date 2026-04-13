@@ -42,11 +42,21 @@ const GOLDEN_DIR = path.join(SKILL_REF_DIR, 'golden-mappings');
 // ---------------------------------------------------------------------------
 // APM master list (52 PPRO APMs + 3 direct)
 // ---------------------------------------------------------------------------
-const APMS = [
-  // Direct providers (also available via PPRO)
-  { name: 'Cash App Pay', code: 'cashapp', region: 'NA', country: 'US', currency: 'USD', pattern: 'redirect-wallet', provider: 'direct' },
-  { name: 'Klarna', code: 'klarna', region: 'NA', country: 'US', currency: 'USD', pattern: 'server-bnpl', provider: 'direct' },
-  { name: 'Afterpay', code: 'afterpay', region: 'NA', country: 'US', currency: 'USD', pattern: 'server-bnpl', provider: 'direct' },
+// Import APM list from shared frontend data (single source of truth)
+import { APMS as FRONTEND_APMS } from './src/data/apmList.js';
+// Normalize codes to lowercase for server-side lookups
+const APMS = FRONTEND_APMS.map(a => ({ ...a, code: a.code.toLowerCase() }));
+
+/* Original server list replaced by import above. Direct vs PPRO classification:
+  - Direct (16): Klarna, CashApp, Afterpay, Affirm, PayPal, PayPal Pay Later,
+    Venmo, Apple Pay, Google Pay, Sezzle, Zip, TabaPay, Alipay+, WeChat Pay, GrabPay, Zepto
+  - PPRO (39): iDEAL, Bancontact, EPS, BLIK, Multibanco, MB Way, Trustly, Wero,
+    Sofort, Giropay, Przelewy24, Swish, Vipps, MobilePay, PostFinance, TWINT,
+    Pix, Boleto, OXXO, SPEI, PSE, Efecty, Mercado Pago, RapiPago, PagoEfectivo,
+    Webpay, Alipay (PPRO), PayNow, GCash, Maya, LINE Pay, KakaoPay, DANA, OVO,
+    ShopeePay, Konbini, PayPay, UPI, Touch 'n Go
+*/
+const _APMS_REMOVED = [
   // PPRO APMs
   { name: 'iDEAL', code: 'ideal', region: 'EU', country: 'NL', currency: 'EUR', pattern: 'bank-redirect', provider: 'ppro' },
   { name: 'Bancontact', code: 'bancontact', region: 'EU', country: 'BE', currency: 'EUR', pattern: 'bank-redirect', provider: 'ppro' },
@@ -97,7 +107,7 @@ const APMS = [
   { name: 'Interac', code: 'interac', region: 'NA', country: 'CA', currency: 'CAD', pattern: 'bank-redirect', provider: 'ppro' },
   { name: 'iDEAL 2.0', code: 'ideal2', region: 'EU', country: 'NL', currency: 'EUR', pattern: 'bank-redirect', provider: 'ppro' },
   { name: 'PaySafeCard', code: 'paysafecard', region: 'EU', country: 'AT', currency: 'EUR', pattern: 'voucher-cash', provider: 'ppro' },
-];
+]; // end of removed list
 
 // ---------------------------------------------------------------------------
 // Platforms

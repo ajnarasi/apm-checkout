@@ -1,0 +1,403 @@
+{
+  "timestamp": "2026-04-12T23:54:28Z",
+  "summary": {
+    "total_apms": 55,
+    "direct": 16,
+    "ppro": 39,
+    "sandbox_pass": 55,
+    "sandbox_total": 55,
+    "capability_pass": 9,
+    "capability_total": 9
+  },
+  "results": {
+    "sandbox": [
+      {
+        "apm": "iDEAL",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Bancontact",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "EPS",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "BLIK",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Multibanco",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "MB Way",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Trustly",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Wero",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Sofort",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Giropay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Przelewy24",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Swish",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Vipps",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "MobilePay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "PostFinance",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "TWINT",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Pix",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Boleto",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "OXXO",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "SPEI",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "PSE",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Efecty",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Mercado Pago",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "RapiPago",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "PagoEfectivo",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Webpay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Alipay (PPRO)",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "PayNow",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "GCash",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Maya",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "LINE Pay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "KakaoPay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "DANA",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "OVO",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "ShopeePay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Konbini",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "PayPay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "UPI",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Touch 'n Go",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Alipay+",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "WeChat Pay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "GrabPay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Zepto",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Klarna",
+        "provider": "klarna",
+        "pass": true
+      },
+      {
+        "apm": "PayPal",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "PayPal Pay Later",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Cash App",
+        "provider": "cashapp",
+        "pass": true
+      },
+      {
+        "apm": "Venmo",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Afterpay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Affirm",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Sezzle",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Zip",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Apple Pay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "Google Pay",
+        "provider": "ppro",
+        "pass": true
+      },
+      {
+        "apm": "TabaPay",
+        "provider": "ppro",
+        "pass": true
+      }
+    ],
+    "mapping": [],
+    "capabilities": [
+      {
+        "apm": "IDEAL",
+        "provider": "ppro",
+        "capabilities": [
+          "auth"
+        ],
+        "desc": "Auth only",
+        "pass": true,
+        "source": "pre-generated"
+      },
+      {
+        "apm": "IDEAL",
+        "provider": "ppro",
+        "capabilities": [
+          "auth",
+          "capture"
+        ],
+        "desc": "Auth + Capture",
+        "pass": true,
+        "source": "pre-generated"
+      },
+      {
+        "apm": "IDEAL",
+        "provider": "ppro",
+        "capabilities": [
+          "auth",
+          "capture",
+          "refund"
+        ],
+        "desc": "Auth + Capture + Refund",
+        "pass": true,
+        "source": "pre-generated"
+      },
+      {
+        "apm": "IDEAL",
+        "provider": "ppro",
+        "capabilities": [
+          "auth",
+          "capture",
+          "refund",
+          "void"
+        ],
+        "desc": "Full lifecycle",
+        "pass": true,
+        "source": "pre-generated"
+      },
+      {
+        "apm": "IDEAL",
+        "provider": "ppro",
+        "capabilities": [
+          "auth",
+          "capture",
+          "refund",
+          "partial-refund",
+          "cancel",
+          "void"
+        ],
+        "desc": "All 6 capabilities",
+        "pass": true,
+        "source": "pre-generated"
+      },
+      {
+        "apm": "KLARNA",
+        "provider": "direct",
+        "capabilities": [
+          "auth",
+          "capture"
+        ],
+        "desc": "Klarna Auth + Capture",
+        "pass": true,
+        "source": "pre-generated"
+      },
+      {
+        "apm": "KLARNA",
+        "provider": "direct",
+        "capabilities": [
+          "auth",
+          "capture",
+          "partial-refund",
+          "cancel"
+        ],
+        "desc": "Klarna with partial refund",
+        "pass": true,
+        "source": "pre-generated"
+      },
+      {
+        "apm": "CASHAPP",
+        "provider": "direct",
+        "capabilities": [
+          "auth",
+          "capture",
+          "refund"
+        ],
+        "desc": "CashApp full",
+        "pass": true,
+        "source": "pre-generated"
+      },
+      {
+        "apm": "ALIPAYPLUS",
+        "provider": "direct",
+        "capabilities": [
+          "auth",
+          "refund",
+          "cancel"
+        ],
+        "desc": "Alipay+ with cancel",
+        "pass": true,
+        "source": "pre-generated"
+      }
+    ]
+  }
+}

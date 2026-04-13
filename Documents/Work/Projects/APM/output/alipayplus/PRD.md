@@ -108,16 +108,23 @@ See `adapter-spec-snappay.md`. Same B2B unmappable fields as other APMs (company
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Processing : pay API called
-    Processing --> Success : notifyPayment SUCCESS
-    Processing --> Failed : notifyPayment FAIL
-    Processing --> Cancelled : cancelPayment
-    Success --> Refunded : refund full
-    Success --> PartRefunded : refund partial
-    PartRefunded --> Refunded : refund remaining
-    Failed --> [*]
-    Cancelled --> [*]
-    Refunded --> [*]
+    state "Processing" as PR
+    state "Success" as SU
+    state "Failed" as FA
+    state "Cancelled" as CA
+    state "Refunded" as RE
+    state "Part Refunded" as PF
+
+    [*] --> PR : Pay called
+    PR --> SU : Notify OK
+    PR --> FA : Notify fail
+    PR --> CA : Cancel
+    SU --> RE : Full refund
+    SU --> PF : Partial
+    PF --> RE : Remaining
+    FA --> [*]
+    CA --> [*]
+    RE --> [*]
 ```
 
 ### Auth Flow

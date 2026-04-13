@@ -167,20 +167,29 @@ Full adapter specification in `adapter-spec-snappay.md`.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> AuthPending : Create charge
-    AuthPending --> Authorized : Bank auth success
-    AuthPending --> Failed : Declined or timeout
-    Authorized --> Captured : Capture full
-    Authorized --> PartCaptured : Capture partial
-    Authorized --> Voided : Void or cancel
-    PartCaptured --> Captured : Capture remaining
-    PartCaptured --> Refunded : Refund
-    Captured --> Refunded : Refund full
-    Captured --> PartRefunded : Refund partial
-    PartRefunded --> Refunded : Refund remaining
-    Failed --> [*]
-    Voided --> [*]
-    Refunded --> [*]
+    state "Auth Pending" as AP
+    state "Authorized" as AU
+    state "Captured" as CA
+    state "Part Captured" as PC
+    state "Refunded" as RE
+    state "Part Refunded" as PR
+    state "Voided" as VO
+    state "Failed" as FA
+
+    [*] --> AP : Create
+    AP --> AU : Auth OK
+    AP --> FA : Declined
+    AU --> CA : Capture
+    AU --> PC : Partial
+    AU --> VO : Cancel
+    PC --> CA : Remaining
+    PC --> RE : Refund
+    CA --> RE : Full refund
+    CA --> PR : Partial
+    PR --> RE : Remaining
+    FA --> [*]
+    VO --> [*]
+    RE --> [*]
 ```
 
 ### Auth Flow

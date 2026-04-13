@@ -4,24 +4,24 @@ import mermaid from 'mermaid';
 // Initialize mermaid with dark theme
 mermaid.initialize({
   startOnLoad: false,
-  theme: 'dark',
+  theme: 'base',
   themeVariables: {
-    primaryColor: '#6C63FF',
-    primaryTextColor: '#e0e0e0',
-    primaryBorderColor: '#6C63FF',
-    lineColor: '#888',
-    secondaryColor: '#1a1a2a',
-    tertiaryColor: '#141414',
+    primaryColor: '#f0ebe3',
+    primaryTextColor: '#1a1a1a',
+    primaryBorderColor: '#1a1a1a',
+    lineColor: '#7a7a7a',
+    secondaryColor: '#e8e2d8',
+    tertiaryColor: '#f5f0e8',
     fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
     fontSize: '13px',
-    noteBkgColor: '#1a1a2a',
-    noteTextColor: '#e0e0e0',
-    noteBorderColor: '#6C63FF',
-    actorBkg: '#1a1a2a',
-    actorBorder: '#6C63FF',
-    actorTextColor: '#e0e0e0',
-    stateBkg: '#1a1a2a',
-    stateBorder: '#6C63FF',
+    noteBkgColor: '#e8e2d8',
+    noteTextColor: '#1a1a1a',
+    noteBorderColor: '#e8c832',
+    actorBkg: '#1a1a1a',
+    actorBorder: '#e8c832',
+    actorTextColor: '#f0ebe3',
+    stateBkg: '#f0ebe3',
+    stateBorder: '#1a1a1a',
   },
   flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
   sequence: { useMaxWidth: true, actorMargin: 80 },
@@ -42,15 +42,17 @@ function MermaidDiagram({ chart }) {
 
   if (error) {
     return (
-      <div className="diagram-error">
-        <pre className="code-block"><code>{chart}</code></pre>
-        <div style={{ color: 'var(--fail)', fontSize: '0.75em', marginTop: 4 }}>Diagram error: {error}</div>
+      <div style={{ margin: '16px 0', background: '#fffbeb', border: '1px solid #fbbf24', borderRadius: 8, padding: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#92400e', marginBottom: 6 }}>Diagram could not render</div>
+        <pre style={{ fontSize: 11, color: '#1a1a1a', whiteSpace: 'pre-wrap', fontFamily: 'JetBrains Mono, monospace', background: '#fef3c7', padding: 10, borderRadius: 4, margin: 0 }}>{chart}</pre>
+        <div style={{ color: '#dc2626', fontSize: '0.72em', marginTop: 6 }}>{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="mermaid-container" ref={ref} dangerouslySetInnerHTML={{ __html: svg }} />
+    <div style={{ background: '#ffffff', border: '1px solid #d4cdc0', borderRadius: 10, padding: 20, margin: '16px 0', overflow: 'auto', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+         ref={ref} dangerouslySetInnerHTML={{ __html: svg }} />
   );
 }
 

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "apm-dashboard-api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3848
+    },
+    {
+      "name": "apm-dashboard-ui",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "5173"],
+      "port": 5173
+    }
+  ]
+}

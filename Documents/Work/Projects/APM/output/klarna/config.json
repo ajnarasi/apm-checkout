@@ -1,0 +1,649 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "v1",
+    "ucomVersion": "0.2.3",
+    "snappayVersion": "3.0.9",
+    "generatedAt": "2026-04-12T05:00:00Z",
+    "patternTemplate": "server-bnpl-v1",
+    "goldenMappingSource": "sandbox-validated-mapping",
+    "safetyChecksPassed": true
+  },
+  "apm": "klarna",
+  "apmDisplayName": "Klarna",
+  "pattern": "server-bnpl",
+  "capabilities": ["auth", "capture", "partial-refund", "cancel"],
+  "regions": ["US", "UK", "DE", "FR"],
+  "channel": "web",
+  "sandbox": {
+    "baseUrl": "https://api-na.playground.klarna.com",
+    "merchant": "PN129867"
+  },
+  "regionalEndpoints": {
+    "US": "https://api-na.playground.klarna.com",
+    "UK": "https://api-eu.playground.klarna.com",
+    "DE": "https://api-eu.playground.klarna.com",
+    "FR": "https://api-eu.playground.klarna.com"
+  },
+  "bnplPromotedFields": [
+    "orderData.itemDetails[]",
+    "shippingAddress",
+    "billingAddress",
+    "customer.email"
+  ],
+  "mappings": {
+    "auth": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "order_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Total order amount in minor units"
+        },
+        {
+          "chFieldPath": "amount.currency",
+          "chType": "string",
+          "apmFieldPath": "purchase_currency",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "ISO 4217 currency code"
+        },
+        {
+          "chFieldPath": "customerAddress.country",
+          "chType": "string",
+          "apmFieldPath": "purchase_country",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "ISO 3166-1 alpha-2 country code"
+        },
+        {
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "chType": "string",
+          "apmFieldPath": "merchant_reference1",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Merchant order reference"
+        },
+        {
+          "chFieldPath": "amountComponents.taxAmounts[0].taxAmount",
+          "chType": "number",
+          "apmFieldPath": "order_tax_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Total tax amount in minor units"
+        },
+        {
+          "chFieldPath": "merchantDetails.merchantId",
+          "chType": "string",
+          "apmFieldPath": "merchant_id",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Merchant identifier"
+        },
+        {
+          "chFieldPath": "paymentMethod.provider",
+          "chType": "string",
+          "apmFieldPath": null,
+          "apmType": null,
+          "transform": "SET_VALUE",
+          "transformValue": "KLARNA",
+          "tier": 1,
+          "required": true,
+          "description": "Payment provider identifier"
+        },
+        {
+          "chFieldPath": "locale",
+          "chType": "string",
+          "apmFieldPath": "locale",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Customer locale (e.g., en-US)"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].itemName",
+          "chType": "string",
+          "apmFieldPath": "order_lines[].name",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Line item name"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].quantity",
+          "chType": "integer",
+          "apmFieldPath": "order_lines[].quantity",
+          "apmType": "integer",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Line item quantity"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].amountComponents.unitPrice",
+          "chType": "number",
+          "apmFieldPath": "order_lines[].unit_price",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Unit price in minor units"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].grossAmount",
+          "chType": "number",
+          "apmFieldPath": "order_lines[].total_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Line total in minor units"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].taxAmounts[0].taxAmount",
+          "chType": "number",
+          "apmFieldPath": "order_lines[].total_tax_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Line item tax in minor units"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].taxAmounts[0].taxRate",
+          "chType": "number",
+          "apmFieldPath": "order_lines[].tax_rate",
+          "apmType": "integer",
+          "transform": "MULTIPLY_10000",
+          "tier": 2,
+          "required": false,
+          "description": "Tax rate in basis points (e.g., 700 = 7%)"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].itemSku",
+          "chType": "string",
+          "apmFieldPath": "order_lines[].reference",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "description": "Item SKU / reference"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].productUrl",
+          "chType": "string",
+          "apmFieldPath": "order_lines[].product_url",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "description": "Product page URL"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].imageUrl",
+          "chType": "string",
+          "apmFieldPath": "order_lines[].image_url",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "description": "Product image URL"
+        },
+        {
+          "chFieldPath": "customer.email",
+          "chType": "string",
+          "apmFieldPath": "shipping_address.email",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Customer email"
+        },
+        {
+          "chFieldPath": "customer.firstName",
+          "chType": "string",
+          "apmFieldPath": "shipping_address.given_name",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Customer first name"
+        },
+        {
+          "chFieldPath": "customer.lastName",
+          "chType": "string",
+          "apmFieldPath": "shipping_address.family_name",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Customer last name"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.street",
+          "chType": "string",
+          "apmFieldPath": "shipping_address.street_address",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Shipping street address"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.city",
+          "chType": "string",
+          "apmFieldPath": "shipping_address.city",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Shipping city"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.stateOrProvince",
+          "chType": "string",
+          "apmFieldPath": "shipping_address.region",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Shipping state/province"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.postalCode",
+          "chType": "string",
+          "apmFieldPath": "shipping_address.postal_code",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Shipping postal code"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.country",
+          "chType": "string",
+          "apmFieldPath": "shipping_address.country",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Shipping country (ISO 3166-1 alpha-2)"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "session_id",
+          "apmType": "string",
+          "chFieldPath": "order.providerOrderId",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Klarna session identifier"
+        },
+        {
+          "apmFieldPath": "client_token",
+          "apmType": "string",
+          "chFieldPath": "paymentMethod.paymentToken.tokenData",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Token for Klarna JS SDK initialization"
+        },
+        {
+          "apmFieldPath": "payment_method_categories[].identifier",
+          "apmType": "string",
+          "chFieldPath": "paymentMethod.availableCategories[].id",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Available payment method categories"
+        },
+        {
+          "apmFieldPath": "payment_method_categories[].name",
+          "apmType": "string",
+          "chFieldPath": "paymentMethod.availableCategories[].name",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "description": "Display name for payment category"
+        },
+        {
+          "apmFieldPath": "order_id",
+          "apmType": "string",
+          "chFieldPath": "transactionProcessingDetails.transactionId",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Klarna order identifier (after order placement)"
+        },
+        {
+          "apmFieldPath": "fraud_status",
+          "apmType": "string",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "transform": "MAP_ENUM",
+          "transformMap": {
+            "ACCEPTED": "AUTHORIZED",
+            "PENDING": "PENDING",
+            "REJECTED": "DECLINED"
+          },
+          "tier": 1,
+          "description": "Fraud assessment result mapped to transaction state"
+        },
+        {
+          "apmFieldPath": "authorized_payment_method.type",
+          "apmType": "string",
+          "chFieldPath": "paymentMethod.type",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Klarna payment method type selected by customer"
+        },
+        {
+          "apmFieldPath": "order_amount",
+          "apmType": "integer",
+          "chFieldPath": "paymentReceipt.approvedAmount.total",
+          "chType": "number",
+          "transform": "DIVIDE_100",
+          "tier": 1,
+          "description": "Authorized amount converted back to decimal"
+        },
+        {
+          "apmFieldPath": "expires_at",
+          "apmType": "string",
+          "chFieldPath": "transactionProcessingDetails.expiresAt",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "description": "Authorization expiration timestamp"
+        },
+        {
+          "apmFieldPath": "redirect_url",
+          "apmType": "string",
+          "chFieldPath": "paymentMethod.redirectUrl",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "description": "Klarna hosted payment page URL (if applicable)"
+        }
+      ]
+    },
+    "capture": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "captured_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Capture amount in minor units"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].itemName",
+          "chType": "string",
+          "apmFieldPath": "order_lines[].name",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Captured line item name"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].quantity",
+          "chType": "integer",
+          "apmFieldPath": "order_lines[].quantity",
+          "apmType": "integer",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Captured line item quantity"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].amountComponents.unitPrice",
+          "chType": "number",
+          "apmFieldPath": "order_lines[].unit_price",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Unit price in minor units"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].grossAmount",
+          "chType": "number",
+          "apmFieldPath": "order_lines[].total_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Line total in minor units"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].taxAmounts[0].taxAmount",
+          "chType": "number",
+          "apmFieldPath": "order_lines[].total_tax_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Line tax in minor units"
+        },
+        {
+          "chFieldPath": "shippingInfo.trackingNumber",
+          "chType": "string",
+          "apmFieldPath": "shipping_info[].tracking_number",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "description": "Shipment tracking number"
+        },
+        {
+          "chFieldPath": "shippingInfo.shippingCarrier",
+          "chType": "string",
+          "apmFieldPath": "shipping_info[].shipping_company",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "description": "Shipping carrier name"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "capture_id",
+          "apmType": "string",
+          "chFieldPath": "transactionProcessingDetails.captureId",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Klarna capture identifier"
+        },
+        {
+          "apmFieldPath": "captured_amount",
+          "apmType": "integer",
+          "chFieldPath": "paymentReceipt.approvedAmount.total",
+          "chType": "number",
+          "transform": "DIVIDE_100",
+          "tier": 1,
+          "description": "Captured amount in decimal"
+        },
+        {
+          "value": "CAPTURED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "description": "Transaction state set to CAPTURED on success"
+        }
+      ]
+    },
+    "partial-refund": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "refunded_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Refund amount in minor units"
+        },
+        {
+          "chFieldPath": "refundDescription",
+          "chType": "string",
+          "apmFieldPath": "description",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "description": "Reason for refund"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].itemName",
+          "chType": "string",
+          "apmFieldPath": "order_lines[].name",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "description": "Refunded line item name"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].quantity",
+          "chType": "integer",
+          "apmFieldPath": "order_lines[].quantity",
+          "apmType": "integer",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "description": "Refunded line item quantity"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].grossAmount",
+          "chType": "number",
+          "apmFieldPath": "order_lines[].total_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 2,
+          "required": false,
+          "description": "Refunded line total in minor units"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].taxAmounts[0].taxAmount",
+          "chType": "number",
+          "apmFieldPath": "order_lines[].total_tax_amount",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 2,
+          "required": false,
+          "description": "Refunded line tax in minor units"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "refund_id",
+          "apmType": "string",
+          "chFieldPath": "transactionProcessingDetails.refundId",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Klarna refund identifier"
+        },
+        {
+          "apmFieldPath": "refunded_amount",
+          "apmType": "integer",
+          "chFieldPath": "paymentReceipt.refundedAmount.total",
+          "chType": "number",
+          "transform": "DIVIDE_100",
+          "tier": 1,
+          "description": "Refunded amount in decimal"
+        },
+        {
+          "value": "REFUNDED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "description": "Transaction state set to REFUNDED on success"
+        }
+      ]
+    },
+    "cancel": {
+      "request": [],
+      "response": [
+        {
+          "value": "VOIDED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "description": "Transaction state set to VOIDED on successful cancel"
+        }
+      ]
+    }
+  },
+  "authScheme": {
+    "type": "HTTP_BASIC",
+    "headerFormat": "Authorization: Basic {Base64(username:password)}",
+    "credentialSource": "vault",
+    "rotationPolicy": "90_DAYS"
+  },
+  "lifecycle": {
+    "states": [
+      "SESSION_CREATED",
+      "AUTHORIZED",
+      "PART_CAPTURED",
+      "CAPTURED",
+      "REFUNDED",
+      "CANCELLED",
+      "EXPIRED"
+    ],
+    "transitions": {
+      "SESSION_CREATED": ["AUTHORIZED", "EXPIRED"],
+      "AUTHORIZED": ["CAPTURED", "PART_CAPTURED", "CANCELLED"],
+      "PART_CAPTURED": ["CAPTURED", "REFUNDED"],
+      "CAPTURED": ["REFUNDED"]
+    },
+    "terminalStates": ["REFUNDED", "CANCELLED", "EXPIRED"],
+    "expirationWindow": "28_DAYS"
+  },
+  "safetyChecks": {
+    "amountSymmetry": "PASS",
+    "currencyPreservation": "PASS",
+    "idUniqueness": "PASS",
+    "tier1Coverage": "PASS",
+    "bidirectionalCompleteness": "PASS",
+    "returnUrlValidation": "N/A",
+    "lineItemIntegrity": "PASS",
+    "minorUnitConsistency": "PASS"
+  },
+  "errorMapping": {
+    "BAD_VALUE": { "chCode": "VALIDATION_ERROR", "httpStatus": 400 },
+    "NOT_FOUND": { "chCode": "RESOURCE_NOT_FOUND", "httpStatus": 404 },
+    "FORBIDDEN": { "chCode": "AUTHORIZATION_FAILED", "httpStatus": 403 },
+    "NOT_ALLOWED": { "chCode": "INVALID_OPERATION", "httpStatus": 409 },
+    "ORDER_AMOUNT_MISMATCH": { "chCode": "AMOUNT_MISMATCH", "httpStatus": 400 },
+    "CAPTURE_NOT_ALLOWED": { "chCode": "CAPTURE_FAILED", "httpStatus": 409 },
+    "REFUND_NOT_ALLOWED": { "chCode": "REFUND_FAILED", "httpStatus": 409 },
+    "CANCEL_NOT_ALLOWED": { "chCode": "CANCEL_FAILED", "httpStatus": 409 },
+    "FRAUD_REJECTED": { "chCode": "FRAUD_DECLINED", "httpStatus": 403 },
+    "SERVER_ERROR": { "chCode": "PROVIDER_ERROR", "httpStatus": 502 }
+  }
+}

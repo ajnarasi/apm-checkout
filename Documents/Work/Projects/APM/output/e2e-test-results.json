@@ -1,0 +1,157 @@
+{
+  "testRun": {
+    "timestamp": "2026-04-11T22:47:12Z",
+    "total": 16,
+    "passed": 11,
+    "partial": 0,
+    "failed": 1,
+    "skipped": 4,
+    "fieldsValidated": 66
+  },
+  "results": [
+    {
+      "test_id": "T1.1",
+      "variant": "auth-only",
+      "capability": "auth",
+      "status": "PASS",
+      "details": "10/10 field mappings validated against live sandbox",
+      "response_code": 201,
+      "fields_validated": 10
+    },
+    {
+      "test_id": "T1.2",
+      "variant": "auth-only",
+      "capability": "amount-symmetry",
+      "status": "PASS",
+      "details": "4/4 transforms symmetric",
+      "response_code": null,
+      "fields_validated": 4
+    },
+    {
+      "test_id": "T1.3",
+      "variant": "auth-only",
+      "capability": "conditional-routing",
+      "status": "PASS",
+      "details": "SCOPE_TYPE_ROUTE: 4/4",
+      "response_code": 201,
+      "fields_validated": 4
+    },
+    {
+      "test_id": "T2.1",
+      "variant": "auth+capture",
+      "capability": "session-create",
+      "status": "PASS",
+      "details": "Session: 3/3",
+      "response_code": 200,
+      "fields_validated": 3
+    },
+    {
+      "test_id": "T2.2",
+      "variant": "auth+capture",
+      "capability": "line-items",
+      "status": "PASS",
+      "details": "BNPL line items: 9/9",
+      "response_code": 200,
+      "fields_validated": 9
+    },
+    {
+      "test_id": "T2.3",
+      "variant": "auth+capture",
+      "capability": "capture",
+      "status": "SKIP",
+      "details": "Requires Klarna widget interaction",
+      "response_code": null,
+      "fields_validated": 0
+    },
+    {
+      "test_id": "T3.1",
+      "variant": "void",
+      "capability": "afterpay-config",
+      "status": "PASS",
+      "details": "Afterpay void config: 7/7",
+      "response_code": null,
+      "fields_validated": 7
+    },
+    {
+      "test_id": "T4.1",
+      "variant": "partial-refund",
+      "capability": "config+fixture",
+      "status": "PASS",
+      "details": "Partial refund: 4/5",
+      "response_code": null,
+      "fields_validated": 4
+    },
+    {
+      "test_id": "T5.1",
+      "variant": "lifecycle",
+      "capability": "auth",
+      "status": "PASS",
+      "details": "GRR_ID created, status=PENDING",
+      "response_code": 201,
+      "fields_validated": 3
+    },
+    {
+      "test_id": "T5.2",
+      "variant": "lifecycle",
+      "capability": "capture",
+      "status": "SKIP",
+      "details": "Requires customer approval flow",
+      "response_code": null,
+      "fields_validated": 0
+    },
+    {
+      "test_id": "T5.3",
+      "variant": "lifecycle",
+      "capability": "refund",
+      "status": "SKIP",
+      "details": "Depends on capture",
+      "response_code": null,
+      "fields_validated": 0
+    },
+    {
+      "test_id": "T5.4",
+      "variant": "lifecycle",
+      "capability": "klarna-session",
+      "status": "PASS",
+      "details": "Session 7cbdb3a1-1e99-644f-869d-a017f7b6ea3d",
+      "response_code": 200,
+      "fields_validated": 1
+    },
+    {
+      "test_id": "T5.5",
+      "variant": "lifecycle",
+      "capability": "klarna-auth",
+      "status": "SKIP",
+      "details": "Requires Klarna JS SDK widget",
+      "response_code": null,
+      "fields_validated": 0
+    },
+    {
+      "test_id": "T6.cashapp",
+      "variant": "safety",
+      "capability": "cashapp",
+      "status": "FAIL",
+      "details": "6/10 safety checks",
+      "response_code": null,
+      "fields_validated": 6
+    },
+    {
+      "test_id": "T6.klarna",
+      "variant": "safety",
+      "capability": "klarna",
+      "status": "PASS",
+      "details": "8/8 safety checks",
+      "response_code": null,
+      "fields_validated": 8
+    },
+    {
+      "test_id": "T6.afterpay",
+      "variant": "safety",
+      "capability": "afterpay",
+      "status": "PASS",
+      "details": "7/7 safety checks",
+      "response_code": null,
+      "fields_validated": 7
+    }
+  ]
+}

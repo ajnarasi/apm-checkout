@@ -1,0 +1,25 @@
+{
+  "name": "@commercehub/checkout-sdk",
+  "version": "1.0.0",
+  "description": "Universal APM Checkout SDK Adapter Framework — 53 payment methods across 6 patterns",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:events": "vitest run --grep 'event ordering'",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "jsdom": "^24.0.0",
+    "@vitest/coverage-v8": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

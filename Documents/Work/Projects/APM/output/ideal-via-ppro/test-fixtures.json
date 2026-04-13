@@ -1,0 +1,536 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "PPRO v1",
+    "aggregator": "PPRO",
+    "targetApm": "IDEAL",
+    "generatedAt": "2026-04-12T07:02:00Z",
+    "patternTemplate": "bank-redirect-v1",
+    "goldenMappingSource": "NONE -- generated from sandbox discovery",
+    "confidence": "generated",
+    "sandboxValidated": true
+  },
+  "testContext": {
+    "sandbox": "https://api.sandbox.eu.ppro.com",
+    "region": "NL",
+    "currency": "EUR",
+    "totalAmount": 10.00,
+    "totalAmountMinor": 1000,
+    "customer": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "fullName": "John Doe",
+      "email": "john@example.com",
+      "country": "NL"
+    },
+    "testChargeId": "charge_oc43q4PDbViOlkzoweDXQ",
+    "testInstrumentId": "instr_13qSCuBpkdyoue9ktrtN6",
+    "testAuthorizationId": "authz_eFTkW5acr2THRcKGaU0PV"
+  },
+  "fixtures": {
+    "auth": {
+      "description": "Create iDEAL payment charge via PPRO. Merchant sends auth request, CH translates to PPRO payment charge, PPRO returns charge ID and bank redirect URL.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "ideal-test-auth-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {
+          "amount": {
+            "total": 10.00,
+            "currency": "EUR"
+          },
+          "paymentMethod": {
+            "provider": "IDEAL"
+          },
+          "merchantDetails": {
+            "merchantId": "PPRO_SANDBOX_MERCHANT"
+          },
+          "transactionDetails": {
+            "merchantOrderId": "ORD-2026-04-12-IDEAL-001",
+            "captureFlag": false
+          },
+          "customer": {
+            "email": "john@example.com",
+            "firstName": "John",
+            "lastName": "Doe"
+          },
+          "customerAddress": {
+            "country": "NL"
+          },
+          "checkoutInteractions": {
+            "returnUrls": {
+              "successUrl": "https://merchant.example.com/checkout/return"
+            },
+            "actions": {
+              "type": "WEB_REDIRECTION"
+            }
+          }
+        }
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/v1/payment-charges",
+        "baseUrl": "https://api.sandbox.eu.ppro.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {sandbox_token}",
+          "Merchant-Id": "{sandbox_merchant_id}"
+        },
+        "body": {
+          "consumer": {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "country": "NL"
+          },
+          "amount": {
+            "value": 1000,
+            "currency": "EUR"
+          },
+          "paymentMethod": "IDEAL",
+          "autoCapture": false,
+          "authenticationSettings": [
+            {
+              "type": "REDIRECT",
+              "settings": {
+                "returnUrl": "https://merchant.example.com/checkout/return"
+              }
+            }
+          ],
+          "merchantPaymentChargeReference": "ORD-2026-04-12-IDEAL-001"
+        }
+      },
+      "apmResponse": {
+        "httpStatus": 201,
+        "body": {
+          "id": "charge_oc43q4PDbViOlkzoweDXQ",
+          "paymentMethod": "IDEAL",
+          "paymentMedium": "ECOMMERCE",
+          "instrumentId": "instr_13qSCuBpkdyoue9ktrtN6",
+          "currency": "EUR",
+          "country": "NL",
+          "status": "AUTHENTICATION_PENDING",
+          "consumer": {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "country": "NL"
+          },
+          "authenticationMethods": [
+            {
+              "type": "REDIRECT",
+              "details": {
+                "requestUrl": "https://sandbox.ppro.com/redirect/ideal/charge_oc43q4PDbViOlkzoweDXQ",
+                "requestMethod": "GET"
+              }
+            }
+          ],
+          "authorizations": [
+            {
+              "id": "authz_eFTkW5acr2THRcKGaU0PV",
+              "amount": 1000,
+              "status": "AUTHENTICATION_PENDING",
+              "merchantPaymentChargeReference": "ORD-2026-04-12-IDEAL-001"
+            }
+          ],
+          "captures": [],
+          "refunds": [],
+          "_links": {
+            "captures": {
+              "href": "/v1/payment-charges/charge_oc43q4PDbViOlkzoweDXQ/captures"
+            },
+            "refunds": {
+              "href": "/v1/payment-charges/charge_oc43q4PDbViOlkzoweDXQ/refunds"
+            },
+            "voids": {
+              "href": "/v1/payment-charges/charge_oc43q4PDbViOlkzoweDXQ/voids"
+            }
+          },
+          "merchantPaymentChargeReference": "ORD-2026-04-12-IDEAL-001"
+        }
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "charge_oc43q4PDbViOlkzoweDXQ",
+            "orderId": "ORD-2026-04-12-IDEAL-001"
+          },
+          "gatewayResponse": {
+            "transactionState": "PAYER_ACTION_REQUIRED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Authentication pending - redirect customer to bank"
+          },
+          "checkoutInteractions": {
+            "actions": {
+              "url": "https://sandbox.ppro.com/redirect/ideal/charge_oc43q4PDbViOlkzoweDXQ",
+              "type": "WEB_REDIRECTION"
+            }
+          },
+          "paymentReceipt": {
+            "approvedAmount": {
+              "total": 10.00,
+              "currency": "EUR"
+            },
+            "processorResponseDetails": {
+              "referenceNumber": "authz_eFTkW5acr2THRcKGaU0PV"
+            }
+          },
+          "paymentMethod": {
+            "provider": "IDEAL",
+            "paymentToken": {
+              "tokenData": "instr_13qSCuBpkdyoue9ktrtN6"
+            }
+          },
+          "transactionDetails": {
+            "merchantOrderId": "ORD-2026-04-12-IDEAL-001"
+          }
+        }
+      }
+    },
+    "auth_confirmed": {
+      "description": "After customer completes bank authentication and is redirected back. PPRO status transitions from AUTHENTICATION_PENDING to AUTHORIZED. This state is detected via webhook or polling.",
+      "apmResponse": {
+        "httpStatus": 200,
+        "body": {
+          "id": "charge_oc43q4PDbViOlkzoweDXQ",
+          "paymentMethod": "IDEAL",
+          "paymentMedium": "ECOMMERCE",
+          "instrumentId": "instr_13qSCuBpkdyoue9ktrtN6",
+          "currency": "EUR",
+          "country": "NL",
+          "status": "AUTHORIZED",
+          "consumer": {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "country": "NL"
+          },
+          "authenticationMethods": [
+            {
+              "type": "REDIRECT",
+              "details": {
+                "requestUrl": "https://sandbox.ppro.com/redirect/ideal/charge_oc43q4PDbViOlkzoweDXQ",
+                "requestMethod": "GET"
+              }
+            }
+          ],
+          "authorizations": [
+            {
+              "id": "authz_eFTkW5acr2THRcKGaU0PV",
+              "amount": 1000,
+              "status": "AUTHORIZED",
+              "merchantPaymentChargeReference": "ORD-2026-04-12-IDEAL-001"
+            }
+          ],
+          "captures": [],
+          "refunds": [],
+          "_links": {
+            "captures": {
+              "href": "/v1/payment-charges/charge_oc43q4PDbViOlkzoweDXQ/captures"
+            },
+            "refunds": {
+              "href": "/v1/payment-charges/charge_oc43q4PDbViOlkzoweDXQ/refunds"
+            },
+            "voids": {
+              "href": "/v1/payment-charges/charge_oc43q4PDbViOlkzoweDXQ/voids"
+            }
+          },
+          "merchantPaymentChargeReference": "ORD-2026-04-12-IDEAL-001"
+        }
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "charge_oc43q4PDbViOlkzoweDXQ",
+            "orderId": "ORD-2026-04-12-IDEAL-001"
+          },
+          "gatewayResponse": {
+            "transactionState": "AUTHORIZED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Approved"
+          },
+          "paymentReceipt": {
+            "approvedAmount": {
+              "total": 10.00,
+              "currency": "EUR"
+            },
+            "processorResponseDetails": {
+              "referenceNumber": "authz_eFTkW5acr2THRcKGaU0PV"
+            }
+          },
+          "paymentMethod": {
+            "provider": "IDEAL",
+            "paymentToken": {
+              "tokenData": "instr_13qSCuBpkdyoue9ktrtN6"
+            }
+          },
+          "transactionDetails": {
+            "merchantOrderId": "ORD-2026-04-12-IDEAL-001"
+          }
+        }
+      }
+    },
+    "capture": {
+      "description": "Full capture of authorized iDEAL payment. Capture the full EUR 10.00 after bank authentication is confirmed.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders/charge_oc43q4PDbViOlkzoweDXQ/capture",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "ideal-test-capture-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {
+          "amount": {
+            "total": 10.00,
+            "currency": "EUR"
+          }
+        }
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/v1/payment-charges/charge_oc43q4PDbViOlkzoweDXQ/captures",
+        "baseUrl": "https://api.sandbox.eu.ppro.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {sandbox_token}",
+          "Merchant-Id": "{sandbox_merchant_id}"
+        },
+        "body": {
+          "amount": {
+            "value": 1000,
+            "currency": "EUR"
+          }
+        }
+      },
+      "apmResponse": {
+        "httpStatus": 200,
+        "body": {
+          "id": "charge_oc43q4PDbViOlkzoweDXQ",
+          "paymentMethod": "IDEAL",
+          "status": "CAPTURED",
+          "currency": "EUR",
+          "country": "NL",
+          "authorizations": [
+            {
+              "id": "authz_eFTkW5acr2THRcKGaU0PV",
+              "amount": 1000,
+              "status": "AUTHORIZED"
+            }
+          ],
+          "captures": [
+            {
+              "id": "capt_7xRm2kPQnL9tYwZ3eA1bC",
+              "amount": 1000,
+              "status": "CAPTURED"
+            }
+          ],
+          "refunds": []
+        }
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "charge_oc43q4PDbViOlkzoweDXQ",
+            "orderId": "ORD-2026-04-12-IDEAL-001"
+          },
+          "gatewayResponse": {
+            "transactionState": "CAPTURED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Capture successful"
+          },
+          "paymentReceipt": {
+            "approvedAmount": {
+              "total": 10.00,
+              "currency": "EUR"
+            },
+            "processorResponseDetails": {
+              "referenceNumber": "capt_7xRm2kPQnL9tYwZ3eA1bC"
+            }
+          }
+        }
+      }
+    },
+    "refund": {
+      "description": "Partial refund of EUR 5.00 from a captured EUR 10.00 iDEAL payment.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders/charge_oc43q4PDbViOlkzoweDXQ/refund",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "ideal-test-refund-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {
+          "amount": {
+            "total": 5.00,
+            "currency": "EUR"
+          }
+        }
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/v1/payment-charges/charge_oc43q4PDbViOlkzoweDXQ/refunds",
+        "baseUrl": "https://api.sandbox.eu.ppro.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {sandbox_token}",
+          "Merchant-Id": "{sandbox_merchant_id}"
+        },
+        "body": {
+          "amount": {
+            "value": 500,
+            "currency": "EUR"
+          }
+        }
+      },
+      "apmResponse": {
+        "httpStatus": 200,
+        "body": {
+          "id": "charge_oc43q4PDbViOlkzoweDXQ",
+          "paymentMethod": "IDEAL",
+          "status": "CAPTURED",
+          "currency": "EUR",
+          "country": "NL",
+          "captures": [
+            {
+              "id": "capt_7xRm2kPQnL9tYwZ3eA1bC",
+              "amount": 1000,
+              "status": "CAPTURED"
+            }
+          ],
+          "refunds": [
+            {
+              "id": "rfnd_4mKp8wXjN2sVhQ6dF9gHi",
+              "amount": 500,
+              "status": "REFUNDED"
+            }
+          ]
+        }
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "charge_oc43q4PDbViOlkzoweDXQ",
+            "orderId": "ORD-2026-04-12-IDEAL-001"
+          },
+          "gatewayResponse": {
+            "transactionState": "REFUNDED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Partial refund successful"
+          },
+          "paymentReceipt": {
+            "refundedAmount": {
+              "total": 5.00,
+              "currency": "EUR"
+            },
+            "processorResponseDetails": {
+              "referenceNumber": "rfnd_4mKp8wXjN2sVhQ6dF9gHi"
+            }
+          }
+        }
+      }
+    },
+    "void": {
+      "description": "Void an authorized but uncaptured iDEAL charge. No request body needed.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders/charge_oc43q4PDbViOlkzoweDXQ/void",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "ideal-test-void-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {}
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/v1/payment-charges/charge_oc43q4PDbViOlkzoweDXQ/voids",
+        "baseUrl": "https://api.sandbox.eu.ppro.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {sandbox_token}",
+          "Merchant-Id": "{sandbox_merchant_id}"
+        },
+        "body": {}
+      },
+      "apmResponse": {
+        "httpStatus": 200,
+        "body": {
+          "id": "charge_oc43q4PDbViOlkzoweDXQ",
+          "paymentMethod": "IDEAL",
+          "status": "VOIDED",
+          "currency": "EUR",
+          "country": "NL",
+          "authorizations": [
+            {
+              "id": "authz_eFTkW5acr2THRcKGaU0PV",
+              "amount": 1000,
+              "status": "VOIDED"
+            }
+          ],
+          "captures": [],
+          "refunds": []
+        }
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "charge_oc43q4PDbViOlkzoweDXQ",
+            "orderId": "ORD-2026-04-12-IDEAL-001"
+          },
+          "gatewayResponse": {
+            "transactionState": "VOIDED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Charge voided"
+          }
+        }
+      }
+    }
+  },
+  "validationChecks": {
+    "amountSymmetry": {
+      "authAmount": 10.00,
+      "captureAmount": 10.00,
+      "refundAmount": 5.00,
+      "netAmount": 5.00,
+      "status": "PASS"
+    },
+    "minorUnitConversion": {
+      "decimal_10_00": 1000,
+      "decimal_5_00": 500,
+      "status": "PASS"
+    },
+    "currencyPreservation": {
+      "inputCurrency": "EUR",
+      "chCurrency": "EUR",
+      "apmCurrency": "EUR",
+      "status": "PASS"
+    },
+    "idTraceability": {
+      "merchantOrderId": "ORD-2026-04-12-IDEAL-001",
+      "pproChargeId": "charge_oc43q4PDbViOlkzoweDXQ",
+      "pproInstrumentId": "instr_13qSCuBpkdyoue9ktrtN6",
+      "pproAuthorizationId": "authz_eFTkW5acr2THRcKGaU0PV",
+      "pproCaptureId": "capt_7xRm2kPQnL9tYwZ3eA1bC",
+      "pproRefundId": "rfnd_4mKp8wXjN2sVhQ6dF9gHi",
+      "status": "PASS"
+    },
+    "redirectUrlPresence": {
+      "authResponseContainsRedirectUrl": true,
+      "redirectUrlField": "authenticationMethods[0].details.requestUrl",
+      "redirectMethod": "GET",
+      "status": "PASS"
+    }
+  }
+}

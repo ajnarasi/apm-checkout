@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "apm-test-harness",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3847,
+      "cwd": "test-harness",
+      "autoPort": false
+    }
+  ]
+}

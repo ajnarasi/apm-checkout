@@ -1,0 +1,228 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "Alipay+ v1",
+    "platforms": {
+      "ucom": {
+        "version": "0.2.3",
+        "included": true
+      },
+      "snappay": {
+        "version": "3.0.9",
+        "included": true
+      }
+    },
+    "generatedAt": "2026-04-12",
+    "patternTemplate": "qr-code-v1",
+    "goldenMappingSource": "Alipay+ official docs + Fiserv integration spec",
+    "confidence": "verified",
+    "safetyChecksPassed": true
+  },
+  "apm": "alipayplus",
+  "apmDisplayName": "Alipay+",
+  "pattern": "qr-code",
+  "capabilities": [
+    "auth",
+    "refund",
+    "partial-refund",
+    "cancel",
+    "inquiry"
+  ],
+  "regions": [
+    "PH",
+    "SG",
+    "MY",
+    "TH",
+    "KR",
+    "ID",
+    "HK",
+    "JP",
+    "CN"
+  ],
+  "channel": "web",
+  "authScheme": {
+    "type": "RSA256_SIGNATURE",
+    "headers": [
+      "client-id",
+      "request-time",
+      "signature"
+    ]
+  },
+  "mappings": {
+    "auth": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "apmFieldPath": "paymentAmount.value",
+          "transform": "DECIMAL_TO_STRING_CENTS",
+          "tier": 1
+        },
+        {
+          "chFieldPath": "amount.currency",
+          "apmFieldPath": "paymentAmount.currency",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        },
+        {
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "apmFieldPath": "paymentRequestId",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        },
+        {
+          "chFieldPath": "merchantDetails.merchantId",
+          "apmFieldPath": "order.merchant.referenceMerchantId",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        },
+        {
+          "chFieldPath": "paymentMethod.provider",
+          "apmFieldPath": "paymentMethod.paymentMethodType",
+          "transform": "MAP_ENUM",
+          "tier": 1,
+          "notes": "ALIPAYPLUS to CONNECT_WALLET"
+        },
+        {
+          "chFieldPath": "checkoutInteractions.channel",
+          "apmFieldPath": "order.env.terminalType",
+          "transform": "MAP_ENUM",
+          "tier": 1
+        },
+        {
+          "chFieldPath": "checkoutInteractions.returnUrls.successUrl",
+          "apmFieldPath": "paymentRedirectUrl",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "paymentId",
+          "chFieldPath": "transactionProcessingDetails.transactionId",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        },
+        {
+          "apmFieldPath": "result.resultStatus",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "transform": "MAP_ENUM",
+          "tier": 1
+        },
+        {
+          "apmFieldPath": "paymentAmount.value",
+          "chFieldPath": "paymentReceipt.approvedAmount.total",
+          "transform": "STRING_CENTS_TO_DECIMAL",
+          "tier": 1
+        },
+        {
+          "apmFieldPath": "normalUrl",
+          "chFieldPath": "checkoutInteractions.actions.url",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        }
+      ]
+    },
+    "refund": {
+      "request": [
+        {
+          "chFieldPath": "referenceTransactionDetails.referenceTransactionId",
+          "apmFieldPath": "paymentId",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        },
+        {
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "apmFieldPath": "refundRequestId",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        },
+        {
+          "chFieldPath": "amount.total",
+          "apmFieldPath": "refundAmount.value",
+          "transform": "DECIMAL_TO_STRING_CENTS",
+          "tier": 1
+        },
+        {
+          "chFieldPath": "amount.currency",
+          "apmFieldPath": "refundAmount.currency",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "refundId",
+          "chFieldPath": "paymentReceipt.processorResponseDetails.referenceNumber",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        },
+        {
+          "apmFieldPath": "refundAmount.value",
+          "chFieldPath": "paymentReceipt.approvedAmount.total",
+          "transform": "STRING_CENTS_TO_DECIMAL",
+          "tier": 1
+        }
+      ]
+    },
+    "partial-refund": {
+      "note": "Same as refund with partial amount"
+    },
+    "cancel": {
+      "request": [
+        {
+          "chFieldPath": "referenceTransactionDetails.referenceTransactionId",
+          "apmFieldPath": "paymentId",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        },
+        {
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "apmFieldPath": "paymentRequestId",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "result.resultStatus",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "transform": "MAP_ENUM",
+          "tier": 1,
+          "notes": "S to VOIDED"
+        }
+      ]
+    },
+    "inquiry": {
+      "request": [
+        {
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "apmFieldPath": "paymentRequestId",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "paymentId",
+          "chFieldPath": "transactionProcessingDetails.transactionId",
+          "transform": "PASSTHROUGH",
+          "tier": 1
+        },
+        {
+          "apmFieldPath": "paymentStatus",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "transform": "MAP_ENUM",
+          "tier": 1
+        }
+      ]
+    }
+  },
+  "safetyChecks": {
+    "amountSymmetry": "PASS",
+    "currencyPreservation": "PASS",
+    "idUniqueness": "PASS",
+    "tier1Coverage": "PASS",
+    "bidirectionalCompleteness": "PASS",
+    "returnUrlValidation": "PASS"
+  }
+}

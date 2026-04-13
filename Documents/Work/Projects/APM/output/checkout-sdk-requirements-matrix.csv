@@ -1,0 +1,324 @@
+=== SECTION 1: UNIVERSAL CALLBACK CONTRACT ===
+APM Code,Name,Region,Pattern,PAYMENT_METHOD_READY,PAYMENT_AUTHORIZED,PAYMENT_ERROR,PAYMENT_CANCELLED,REDIRECT_REQUIRED,QR_CODE_GENERATED,VOUCHER_CODE_GENERATED,VOUCHER_EXPIRED,PHONE_NUMBER_REQUIRED,SHIPPING_ADDRESS_CHANGED,SHIPPING_METHOD_CHANGED,COUPON_CODE_CHANGED,PAYMENT_METHOD_SELECTED,BILLING_ADDRESS_CHANGED,WIDGET_HEIGHT_CHANGED,WIDGET_OVERLAY_SHOWN,WIDGET_OVERLAY_HIDDEN,PROMO_MESSAGE_RENDERED
+KLARNA,Klarna,Global,server-bnpl,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,Yes,Yes,Yes,Yes
+CASHAPP,Cash App,Global,redirect-wallet,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No
+AFTERPAY,Afterpay,Global,server-bnpl,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,Yes
+ALIPAYPLUS,Alipay+,APAC,qr-code,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No
+WECHATPAY,WeChat Pay,APAC,qr-code,Yes,Yes,Yes,No,No,Yes,No,No,No,No,No,No,No,No,No,No,No,No
+GRABPAY,GrabPay,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+PAYPAL,PayPal,Global,redirect-wallet,Yes,Yes,Yes,Yes,No,No,No,No,No,Yes,Yes,No,No,No,No,No,No,Yes
+APPLEPAY,Apple Pay,Global,native-wallet,Yes,Yes,Yes,Yes,No,No,No,No,No,Yes,Yes,Yes,Yes,Yes,No,No,No,No
+GOOGLEPAY,Google Pay,Global,native-wallet,Yes,Yes,Yes,No,No,No,No,No,No,Yes,Yes,Yes,No,No,No,No,No,No
+AFFIRM,Affirm,Global,server-bnpl,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,Yes,Yes,Yes
+VENMO,Venmo,Global,redirect-wallet,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No,No
+SEZZLE,Sezzle,Global,server-bnpl,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,Yes
+ZIP,Zip,Global,server-bnpl,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,Yes,Yes,Yes
+TABAPAY,TabaPay,Global,redirect-wallet,Yes,Yes,Yes,No,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+IDEAL,iDEAL,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+BANCONTACT,Bancontact,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+EPS,EPS,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+BLIK,BLIK,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+TRUSTLY,Trustly,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+WERO,Wero,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+SOFORT,Sofort,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+GIROPAY,Giropay,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+PRZELEWY24,Przelewy24,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+POSTFINANCE,PostFinance,Europe,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+MBWAY,MB WAY,Europe,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,Yes,No,No,No,No,No,No,No,No,No
+SWISH,Swish,Europe,redirect-wallet,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No
+VIPPS,Vipps,Europe,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+MOBILEPAY,MobilePay,Europe,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+TWINT,TWINT,Europe,qr-code,Yes,Yes,Yes,No,No,Yes,No,No,No,No,No,No,No,No,No,No,No,No
+MULTIBANCO,Multibanco,Europe,voucher-cash,Yes,No,Yes,No,No,No,Yes,Yes,No,No,No,No,No,No,No,No,No,No
+SPEI,SPEI,LATAM,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+PSE,PSE,LATAM,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+WEBPAY,Webpay,LATAM,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+MERCADOPAGO,Mercado Pago,LATAM,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+PIX,Pix,LATAM,qr-code,Yes,Yes,Yes,No,No,Yes,No,No,No,No,No,No,No,No,No,No,No,No
+BOLETO,Boleto,LATAM,voucher-cash,Yes,No,Yes,No,No,No,Yes,Yes,No,No,No,No,No,No,No,No,No,No
+OXXO,OXXO,LATAM,voucher-cash,Yes,No,Yes,No,No,No,Yes,Yes,No,No,No,No,No,No,No,No,No,No
+EFECTY,Efecty,LATAM,voucher-cash,Yes,No,Yes,No,No,No,Yes,Yes,No,No,No,No,No,No,No,No,No,No
+RAPIPAGO,RapiPago,LATAM,voucher-cash,Yes,No,Yes,No,No,No,Yes,Yes,No,No,No,No,No,No,No,No,No,No
+PAGOEFECTIVO,PagoEfectivo,LATAM,voucher-cash,Yes,No,Yes,No,No,No,Yes,Yes,No,No,No,No,No,No,No,No,No,No
+PAYNOW,PayNow,APAC,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+GCASH,GCash,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+MAYA,Maya,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+LINEPAY,LINE Pay,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+KAKAOPAY,KakaoPay,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+DANA,DANA,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+OVO,OVO,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+SHOPEEPAY,ShopeePay,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+TOUCHNGO,Touch 'n Go,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
+ALIPAY,Alipay,APAC,qr-code,Yes,Yes,Yes,No,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No
+PAYPAY,PayPay,APAC,qr-code,Yes,Yes,Yes,No,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No
+UPI,UPI,APAC,qr-code,Yes,Yes,Yes,No,No,Yes,No,No,No,No,No,No,No,No,No,No,No,No
+KONBINI,Konbini,APAC,voucher-cash,Yes,No,Yes,No,No,No,Yes,Yes,No,No,No,No,No,No,No,No,No,No
+
+=== SECTION 2: SDK METADATA ===
+APM Code,Name,SDK URL,Version,Load Method,Global Variable,Sandbox URL,Sandbox Type,Auth Scheme,Brand Color
+KLARNA,Klarna,x.klarnacdn.net/kp/lib/v1/api.js,v1,async-script,Klarna.Payments,api-na.playground.klarna.com,Live,HTTP Basic,#FFB3C7
+CASHAPP,Cash App,sand.kit.cash.app/web/cashapp-pay.js,v1,async-script,CashAppPay,sandbox.api.cash.app,Live,HMAC-SHA256,#00D632
+AFTERPAY,Afterpay,N/A,1.0,none,N/A,global-api-sandbox.afterpay.com,Mock,HTTP Basic,#00D98B
+ALIPAYPLUS,Alipay+,N/A,1.0,none,N/A,Mock,Mock,RSA256,#1677FF
+WECHATPAY,WeChat Pay,N/A,1.0,none,N/A,Mock,Mock,HMAC-SHA256,#07C160
+GRABPAY,GrabPay,N/A,1.0,none,N/A,Mock,Mock,HMAC-SHA256,#00B14F
+PAYPAL,PayPal,paypal.com/sdk/js,v5,async-script,paypal,sandbox.paypal.com,Signup,OAuth2,#FFC439
+APPLEPAY,Apple Pay,N/A (browser),v14,payment-request-api,ApplePaySession,Apple Developer,Live,mTLS,#000000
+GOOGLEPAY,Google Pay,pay.google.com/gp/p/js/pay.js,v2,async-script,google.payments.api,TEST mode,Public,None,#4285F4
+AFFIRM,Affirm,cdn1.affirm.com/js/v2/affirm.js,v2,async-script,affirm,sandbox.affirm.com,Signup,API Key,#4A4AF4
+VENMO,Venmo,Braintree SDK,v3,async-script,braintree.venmo,Braintree sandbox,Signup,Braintree,#3D95CE
+SEZZLE,Sezzle,N/A,1.0,none,N/A,Mock,Mock,API Key,#392B54
+ZIP,Zip,quadpay.com/sdk/v2/quadpay.js,v2,async-script,Quadpay,Mock,Mock,HMAC-SHA256,#7B2DBF
+TABAPAY,TabaPay,N/A,1.0,none,N/A,Mock,Mock,API Key,#1B2845
+IDEAL,iDEAL,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#CC0066
+BANCONTACT,Bancontact,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#005498
+EPS,EPS,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#C8192E
+BLIK,BLIK,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#000000
+TRUSTLY,Trustly,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#0EE06E
+WERO,Wero,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#4E89FF
+SOFORT,Sofort,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#EF809F
+GIROPAY,Giropay,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#003A7D
+PRZELEWY24,Przelewy24,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#D13239
+POSTFINANCE,PostFinance,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#FFCC00
+MBWAY,MB WAY,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#FF0000
+SWISH,Swish,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#F8B71C
+VIPPS,Vipps,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#FF5B24
+MOBILEPAY,MobilePay,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#5A78FF
+TWINT,TWINT,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#000000
+MULTIBANCO,Multibanco,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#0066CC
+SPEI,SPEI,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#004B87
+PSE,PSE,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#005BAA
+WEBPAY,Webpay,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#FF0000
+MERCADOPAGO,Mercado Pago,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#009EE3
+PIX,Pix,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#32BCAD
+BOLETO,Boleto,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#F7941E
+OXXO,OXXO,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#CD1B2A
+EFECTY,Efecty,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#00A651
+RAPIPAGO,RapiPago,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#009EDB
+PAGOEFECTIVO,PagoEfectivo,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#FFCC00
+PAYNOW,PayNow,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#7B2D8E
+GCASH,GCash,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#007DFE
+MAYA,Maya,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#01C853
+LINEPAY,LINE Pay,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#00C300
+KAKAOPAY,KakaoPay,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#FFEB00
+DANA,DANA,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#118EEA
+OVO,OVO,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#4C2A86
+SHOPEEPAY,ShopeePay,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#EE4D2D
+TOUCHNGO,Touch 'n Go,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#005ABB
+ALIPAY,Alipay,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#1677FF
+PAYPAY,PayPay,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#FF0033
+UPI,UPI,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#5F259F
+KONBINI,Konbini,N/A (PPRO),PPRO v1,none,N/A,api.sandbox.eu.ppro.com,Live,Bearer Token,#FF6600
+
+=== SECTION 3: BUTTON & STYLING ===
+APM Code,Name,Button Label,Brand Color,Has Promo Widget,Pattern
+KLARNA,Klarna,Pay with Klarna,#FFB3C7,Yes,server-bnpl
+CASHAPP,Cash App,Pay with Cash App,#00D632,No,redirect-wallet
+AFTERPAY,Afterpay,Pay with Afterpay,#00D98B,Yes,server-bnpl
+ALIPAYPLUS,Alipay+,Pay with Alipay+,#1677FF,No,qr-code
+WECHATPAY,WeChat Pay,Pay with WeChat Pay,#07C160,No,qr-code
+GRABPAY,GrabPay,Pay with GrabPay,#00B14F,No,redirect-wallet
+PAYPAL,PayPal,Pay with PayPal,#FFC439,Yes,redirect-wallet
+APPLEPAY,Apple Pay,Pay with Apple Pay,#000000,No,native-wallet
+GOOGLEPAY,Google Pay,Pay with Google Pay,#4285F4,No,native-wallet
+AFFIRM,Affirm,Pay with Affirm,#4A4AF4,Yes,server-bnpl
+VENMO,Venmo,Pay with Venmo,#3D95CE,No,redirect-wallet
+SEZZLE,Sezzle,Pay with Sezzle,#392B54,Yes,server-bnpl
+ZIP,Zip,Pay with Zip,#7B2DBF,Yes,server-bnpl
+TABAPAY,TabaPay,Pay with TabaPay,#1B2845,No,redirect-wallet
+IDEAL,iDEAL,Pay with iDEAL,#CC0066,No,bank-redirect
+BANCONTACT,Bancontact,Pay with Bancontact,#005498,No,bank-redirect
+EPS,EPS,Pay with EPS,#C8192E,No,bank-redirect
+BLIK,BLIK,Pay with BLIK,#000000,No,bank-redirect
+TRUSTLY,Trustly,Pay with Trustly,#0EE06E,No,bank-redirect
+WERO,Wero,Pay with Wero,#4E89FF,No,bank-redirect
+SOFORT,Sofort,Pay with Sofort,#EF809F,No,bank-redirect
+GIROPAY,Giropay,Pay with Giropay,#003A7D,No,bank-redirect
+PRZELEWY24,Przelewy24,Pay with Przelewy24,#D13239,No,bank-redirect
+POSTFINANCE,PostFinance,Pay with PostFinance,#FFCC00,No,bank-redirect
+MBWAY,MB WAY,Pay with MB WAY,#FF0000,No,redirect-wallet
+SWISH,Swish,Pay with Swish,#F8B71C,No,redirect-wallet
+VIPPS,Vipps,Pay with Vipps,#FF5B24,No,redirect-wallet
+MOBILEPAY,MobilePay,Pay with MobilePay,#5A78FF,No,redirect-wallet
+TWINT,TWINT,Pay with TWINT,#000000,No,qr-code
+MULTIBANCO,Multibanco,Pay with Multibanco,#0066CC,No,voucher-cash
+SPEI,SPEI,Pay with SPEI,#004B87,No,bank-redirect
+PSE,PSE,Pay with PSE,#005BAA,No,bank-redirect
+WEBPAY,Webpay,Pay with Webpay,#FF0000,No,bank-redirect
+MERCADOPAGO,Mercado Pago,Pay with Mercado Pago,#009EE3,No,redirect-wallet
+PIX,Pix,Pay with Pix,#32BCAD,No,qr-code
+BOLETO,Boleto,Pay with Boleto,#F7941E,No,voucher-cash
+OXXO,OXXO,Pay with OXXO,#CD1B2A,No,voucher-cash
+EFECTY,Efecty,Pay with Efecty,#00A651,No,voucher-cash
+RAPIPAGO,RapiPago,Pay with RapiPago,#009EDB,No,voucher-cash
+PAGOEFECTIVO,PagoEfectivo,Pay with PagoEfectivo,#FFCC00,No,voucher-cash
+PAYNOW,PayNow,Pay with PayNow,#7B2D8E,No,bank-redirect
+GCASH,GCash,Pay with GCash,#007DFE,No,redirect-wallet
+MAYA,Maya,Pay with Maya,#01C853,No,redirect-wallet
+LINEPAY,LINE Pay,Pay with LINE Pay,#00C300,No,redirect-wallet
+KAKAOPAY,KakaoPay,Pay with KakaoPay,#FFEB00,No,redirect-wallet
+DANA,DANA,Pay with DANA,#118EEA,No,redirect-wallet
+OVO,OVO,Pay with OVO,#4C2A86,No,redirect-wallet
+SHOPEEPAY,ShopeePay,Pay with ShopeePay,#EE4D2D,No,redirect-wallet
+TOUCHNGO,Touch 'n Go,Pay with Touch 'n Go,#005ABB,No,redirect-wallet
+ALIPAY,Alipay,Pay with Alipay,#1677FF,No,qr-code
+PAYPAY,PayPay,Pay with PayPay,#FF0033,No,qr-code
+UPI,UPI,Pay with UPI,#5F259F,No,qr-code
+KONBINI,Konbini,Pay with Konbini,#FF6600,No,voucher-cash
+
+=== SECTION 4: SERVER HANDOFF ===
+APM Code,Capability,Endpoint,Method,Amount Transform
+KLARNA,auth,/api/klarna/session,POST,MULTIPLY_100
+KLARNA,capture,/api/klarna/capture,POST,MULTIPLY_100
+KLARNA,refund,/api/klarna/refund,POST,MULTIPLY_100
+CASHAPP,auth,/api/cashapp/request,POST,MULTIPLY_100
+AFTERPAY,auth,/api/afterpay/checkout,POST,NUMBER_TO_STRING
+AFTERPAY,capture,/api/afterpay/capture,POST,NUMBER_TO_STRING
+ALIPAYPLUS,auth,/api/alipayplus/pay,POST,DECIMAL_TO_STRING_CENTS
+ALIPAYPLUS,refund,/api/alipayplus/refund,POST,DECIMAL_TO_STRING_CENTS
+WECHATPAY,auth,/api/wechatpay/order,POST,MULTIPLY_100
+WECHATPAY,refund,/api/wechatpay/refund,POST,MULTIPLY_100
+GRABPAY,auth,/api/grabpay/charge,POST,MULTIPLY_100
+GRABPAY,refund,/api/grabpay/refund,POST,MULTIPLY_100
+PAYPAL,auth,/api/paypal/order,POST,PASSTHROUGH
+APPLEPAY,auth,/api/applepay/session,POST,PASSTHROUGH
+GOOGLEPAY,auth,/api/googlepay/process,POST,PASSTHROUGH
+AFFIRM,auth,/api/affirm/checkout,POST,PASSTHROUGH
+VENMO,auth,/api/venmo/tokenize,POST,PASSTHROUGH
+SEZZLE,auth,/api/sezzle/checkout,POST,PASSTHROUGH
+ZIP,auth,/api/zip/checkout,POST,PASSTHROUGH
+TABAPAY,auth,/api/tabapay/session,POST,PASSTHROUGH
+IDEAL,auth,/api/ppro/charge,POST,MULTIPLY_100
+IDEAL,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+BANCONTACT,auth,/api/ppro/charge,POST,MULTIPLY_100
+BANCONTACT,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+EPS,auth,/api/ppro/charge,POST,MULTIPLY_100
+EPS,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+BLIK,auth,/api/ppro/charge,POST,MULTIPLY_100
+BLIK,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+TRUSTLY,auth,/api/ppro/charge,POST,MULTIPLY_100
+TRUSTLY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+WERO,auth,/api/ppro/charge,POST,MULTIPLY_100
+WERO,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+SOFORT,auth,/api/ppro/charge,POST,MULTIPLY_100
+SOFORT,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+GIROPAY,auth,/api/ppro/charge,POST,MULTIPLY_100
+GIROPAY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+PRZELEWY24,auth,/api/ppro/charge,POST,MULTIPLY_100
+PRZELEWY24,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+POSTFINANCE,auth,/api/ppro/charge,POST,MULTIPLY_100
+POSTFINANCE,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+MBWAY,auth,/api/ppro/charge,POST,MULTIPLY_100
+MBWAY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+SWISH,auth,/api/ppro/charge,POST,MULTIPLY_100
+SWISH,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+VIPPS,auth,/api/ppro/charge,POST,MULTIPLY_100
+VIPPS,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+MOBILEPAY,auth,/api/ppro/charge,POST,MULTIPLY_100
+MOBILEPAY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+TWINT,auth,/api/ppro/charge,POST,MULTIPLY_100
+TWINT,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+MULTIBANCO,auth,/api/ppro/charge,POST,MULTIPLY_100
+MULTIBANCO,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+SPEI,auth,/api/ppro/charge,POST,MULTIPLY_100
+SPEI,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+PSE,auth,/api/ppro/charge,POST,MULTIPLY_100
+PSE,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+WEBPAY,auth,/api/ppro/charge,POST,MULTIPLY_100
+WEBPAY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+MERCADOPAGO,auth,/api/ppro/charge,POST,MULTIPLY_100
+MERCADOPAGO,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+PIX,auth,/api/ppro/charge,POST,MULTIPLY_100
+PIX,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+BOLETO,auth,/api/ppro/charge,POST,MULTIPLY_100
+BOLETO,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+OXXO,auth,/api/ppro/charge,POST,MULTIPLY_100
+OXXO,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+EFECTY,auth,/api/ppro/charge,POST,MULTIPLY_100
+EFECTY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+RAPIPAGO,auth,/api/ppro/charge,POST,MULTIPLY_100
+RAPIPAGO,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+PAGOEFECTIVO,auth,/api/ppro/charge,POST,MULTIPLY_100
+PAGOEFECTIVO,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+PAYNOW,auth,/api/ppro/charge,POST,MULTIPLY_100
+PAYNOW,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+GCASH,auth,/api/ppro/charge,POST,MULTIPLY_100
+GCASH,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+MAYA,auth,/api/ppro/charge,POST,MULTIPLY_100
+MAYA,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+LINEPAY,auth,/api/ppro/charge,POST,MULTIPLY_100
+LINEPAY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+KAKAOPAY,auth,/api/ppro/charge,POST,MULTIPLY_100
+KAKAOPAY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+DANA,auth,/api/ppro/charge,POST,MULTIPLY_100
+DANA,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+OVO,auth,/api/ppro/charge,POST,MULTIPLY_100
+OVO,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+SHOPEEPAY,auth,/api/ppro/charge,POST,MULTIPLY_100
+SHOPEEPAY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+TOUCHNGO,auth,/api/ppro/charge,POST,MULTIPLY_100
+TOUCHNGO,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+ALIPAY,auth,/api/ppro/charge,POST,MULTIPLY_100
+ALIPAY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+PAYPAY,auth,/api/ppro/charge,POST,MULTIPLY_100
+PAYPAY,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+UPI,auth,/api/ppro/charge,POST,MULTIPLY_100
+UPI,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+KONBINI,auth,/api/ppro/charge,POST,MULTIPLY_100
+KONBINI,refund,/api/ppro/charge/{id}/refunds,POST,MULTIPLY_100
+
+=== SECTION 5: TIMEOUT BUDGETS ===
+APM Code,Pattern,Script Load (ms),Init (ms),Auth (ms),Poll Interval (ms),Poll Max (ms),Handoff (ms)
+KLARNA,server-bnpl,10000,5000,30000,N/A,N/A,15000
+CASHAPP,redirect-wallet,10000,5000,30000,2000,900000,15000
+AFTERPAY,server-bnpl,N/A,5000,30000,N/A,N/A,15000
+ALIPAYPLUS,qr-code,N/A,5000,30000,3000,3600000,15000
+WECHATPAY,qr-code,N/A,5000,30000,3000,3600000,15000
+GRABPAY,redirect-wallet,N/A,5000,30000,2000,900000,15000
+PAYPAL,redirect-wallet,10000,5000,30000,2000,900000,15000
+APPLEPAY,native-wallet,10000,5000,30000,N/A,N/A,15000
+GOOGLEPAY,native-wallet,10000,5000,30000,N/A,N/A,15000
+AFFIRM,server-bnpl,10000,5000,30000,N/A,N/A,15000
+VENMO,redirect-wallet,10000,5000,30000,2000,900000,15000
+SEZZLE,server-bnpl,N/A,5000,30000,N/A,N/A,15000
+ZIP,server-bnpl,10000,5000,30000,N/A,N/A,15000
+TABAPAY,redirect-wallet,N/A,5000,30000,2000,900000,15000
+IDEAL,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+BANCONTACT,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+EPS,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+BLIK,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+TRUSTLY,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+WERO,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+SOFORT,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+GIROPAY,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+PRZELEWY24,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+POSTFINANCE,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+MBWAY,redirect-wallet,N/A,5000,30000,2000,900000,15000
+SWISH,redirect-wallet,N/A,5000,30000,2000,900000,15000
+VIPPS,redirect-wallet,N/A,5000,30000,2000,900000,15000
+MOBILEPAY,redirect-wallet,N/A,5000,30000,2000,900000,15000
+TWINT,qr-code,N/A,5000,30000,3000,3600000,15000
+MULTIBANCO,voucher-cash,N/A,5000,30000,300000,259200000,15000
+SPEI,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+PSE,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+WEBPAY,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+MERCADOPAGO,redirect-wallet,N/A,5000,30000,2000,900000,15000
+PIX,qr-code,N/A,5000,30000,3000,3600000,15000
+BOLETO,voucher-cash,N/A,5000,30000,300000,259200000,15000
+OXXO,voucher-cash,N/A,5000,30000,300000,259200000,15000
+EFECTY,voucher-cash,N/A,5000,30000,300000,259200000,15000
+RAPIPAGO,voucher-cash,N/A,5000,30000,300000,259200000,15000
+PAGOEFECTIVO,voucher-cash,N/A,5000,30000,300000,259200000,15000
+PAYNOW,bank-redirect,N/A,5000,30000,N/A,N/A,15000
+GCASH,redirect-wallet,N/A,5000,30000,2000,900000,15000
+MAYA,redirect-wallet,N/A,5000,30000,2000,900000,15000
+LINEPAY,redirect-wallet,N/A,5000,30000,2000,900000,15000
+KAKAOPAY,redirect-wallet,N/A,5000,30000,2000,900000,15000
+DANA,redirect-wallet,N/A,5000,30000,2000,900000,15000
+OVO,redirect-wallet,N/A,5000,30000,2000,900000,15000
+SHOPEEPAY,redirect-wallet,N/A,5000,30000,2000,900000,15000
+TOUCHNGO,redirect-wallet,N/A,5000,30000,2000,900000,15000
+ALIPAY,qr-code,N/A,5000,30000,3000,3600000,15000
+PAYPAY,qr-code,N/A,5000,30000,3000,3600000,15000
+UPI,qr-code,N/A,5000,30000,3000,3600000,15000
+KONBINI,voucher-cash,N/A,5000,30000,300000,259200000,15000

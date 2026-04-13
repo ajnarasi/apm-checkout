@@ -1,0 +1,711 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "v1",
+    "generatedAt": "2026-04-12T05:00:00Z",
+    "patternTemplate": "server-bnpl-v1",
+    "goldenMappingSource": "sandbox-validated-mapping"
+  },
+  "testContext": {
+    "merchant": "PN129867",
+    "sandbox": "https://api-na.playground.klarna.com",
+    "region": "US",
+    "locale": "en-US",
+    "currency": "USD",
+    "totalAmount": 50.00,
+    "totalAmountMinor": 5000,
+    "taxAmount": 3.50,
+    "taxAmountMinor": 350,
+    "lineItems": [
+      { "name": "Premium Widget", "quantity": 2, "unitPrice": 20.00, "unitPriceMinor": 2000, "lineTotal": 40.00, "lineTotalMinor": 4000, "taxAmount": 2.80, "taxAmountMinor": 280, "sku": "WIDGET-001" },
+      { "name": "Shipping", "quantity": 1, "unitPrice": 10.00, "unitPriceMinor": 1000, "lineTotal": 10.00, "lineTotalMinor": 1000, "taxAmount": 0.70, "taxAmountMinor": 70, "sku": "SHIP-STD" }
+    ],
+    "customer": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@example.com",
+      "phone": "+12125551234"
+    },
+    "shippingAddress": {
+      "street": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "postalCode": "10001",
+      "country": "US"
+    },
+    "billingAddress": {
+      "street": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "postalCode": "10001",
+      "country": "US"
+    }
+  },
+  "fixtures": {
+    "auth": {
+      "phase1_session": {
+        "description": "Phase 1: Create Klarna payment session. Merchant sends auth request, CH creates session with Klarna, returns client_token for JS SDK.",
+        "chRequest": {
+          "method": "POST",
+          "path": "/checkouts/v1/orders",
+          "headers": {
+            "Content-Type": "application/json",
+            "Client-Request-Id": "klarna-test-auth-001",
+            "Auth-Token-Type": "HMAC",
+            "Authorization": "HMAC <computed>"
+          },
+          "body": {
+            "amount": {
+              "total": 50.00,
+              "currency": "USD"
+            },
+            "paymentMethod": {
+              "provider": "KLARNA"
+            },
+            "locale": "en-US",
+            "merchantDetails": {
+              "merchantId": "PN129867"
+            },
+            "transactionDetails": {
+              "merchantOrderId": "ORD-2026-04-12-0001"
+            },
+            "customer": {
+              "email": "john.doe@example.com",
+              "firstName": "John",
+              "lastName": "Doe",
+              "phone": {
+                "phoneNumber": "+12125551234"
+              }
+            },
+            "shippingAddress": {
+              "address": {
+                "street": "123 Main St",
+                "city": "New York",
+                "stateOrProvince": "NY",
+                "postalCode": "10001",
+                "country": "US"
+              }
+            },
+            "billingAddress": {
+              "address": {
+                "street": "123 Main St",
+                "city": "New York",
+                "stateOrProvince": "NY",
+                "postalCode": "10001",
+                "country": "US"
+              }
+            },
+            "amountComponents": {
+              "taxAmounts": [
+                {
+                  "taxAmount": 3.50
+                }
+              ]
+            },
+            "orderData": {
+              "itemDetails": [
+                {
+                  "itemName": "Premium Widget",
+                  "itemSku": "WIDGET-001",
+                  "quantity": 2,
+                  "amountComponents": {
+                    "unitPrice": 20.00
+                  },
+                  "grossAmount": 40.00,
+                  "taxAmounts": [
+                    {
+                      "taxAmount": 2.80,
+                      "taxRate": 0.07
+                    }
+                  ]
+                },
+                {
+                  "itemName": "Shipping",
+                  "itemSku": "SHIP-STD",
+                  "quantity": 1,
+                  "amountComponents": {
+                    "unitPrice": 10.00
+                  },
+                  "grossAmount": 10.00,
+                  "taxAmounts": [
+                    {
+                      "taxAmount": 0.70,
+                      "taxRate": 0.07
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "apmRequest": {
+          "method": "POST",
+          "path": "/payments/v1/sessions",
+          "baseUrl": "https://api-na.playground.klarna.com",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Basic {Base64(username:password)}"
+          },
+          "body": {
+            "purchase_country": "US",
+            "purchase_currency": "USD",
+            "locale": "en-US",
+            "order_amount": 5000,
+            "order_tax_amount": 350,
+            "merchant_reference1": "ORD-2026-04-12-0001",
+            "order_lines": [
+              {
+                "name": "Premium Widget",
+                "reference": "WIDGET-001",
+                "quantity": 2,
+                "unit_price": 2000,
+                "total_amount": 4000,
+                "total_tax_amount": 280,
+                "tax_rate": 700
+              },
+              {
+                "name": "Shipping",
+                "reference": "SHIP-STD",
+                "quantity": 1,
+                "unit_price": 1000,
+                "total_amount": 1000,
+                "total_tax_amount": 70,
+                "tax_rate": 700
+              }
+            ],
+            "shipping_address": {
+              "given_name": "John",
+              "family_name": "Doe",
+              "email": "john.doe@example.com",
+              "phone": "+12125551234",
+              "street_address": "123 Main St",
+              "city": "New York",
+              "region": "NY",
+              "postal_code": "10001",
+              "country": "US"
+            },
+            "billing_address": {
+              "given_name": "John",
+              "family_name": "Doe",
+              "email": "john.doe@example.com",
+              "phone": "+12125551234",
+              "street_address": "123 Main St",
+              "city": "New York",
+              "region": "NY",
+              "postal_code": "10001",
+              "country": "US"
+            }
+          }
+        },
+        "apmResponse": {
+          "httpStatus": 200,
+          "body": {
+            "session_id": "kls_sess_abcdef1234567890",
+            "client_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjgyMzA1ZWJjLWI4MTEtMzYzNy1hYTRjLTY2ZWNhMTg3NGYzZCJ9.ewogICJzZXNzaW9uX2lkIiA6ICJrbHNfc2Vzc19hYmNkZWYxMjM0NTY3ODkwIgp9",
+            "payment_method_categories": [
+              {
+                "identifier": "pay_later",
+                "name": "Pay later",
+                "asset_urls": {
+                  "descriptive": "https://x.klarnacdn.net/payment-method/assets/badges/generic/klarna.svg",
+                  "standard": "https://x.klarnacdn.net/payment-method/assets/badges/generic/klarna.svg"
+                }
+              },
+              {
+                "identifier": "pay_over_time",
+                "name": "Financing",
+                "asset_urls": {
+                  "descriptive": "https://x.klarnacdn.net/payment-method/assets/badges/generic/klarna.svg",
+                  "standard": "https://x.klarnacdn.net/payment-method/assets/badges/generic/klarna.svg"
+                }
+              }
+            ]
+          }
+        },
+        "chResponse": {
+          "httpStatus": 200,
+          "body": {
+            "order": {
+              "providerOrderId": "kls_sess_abcdef1234567890"
+            },
+            "paymentMethod": {
+              "provider": "KLARNA",
+              "paymentToken": {
+                "tokenData": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjgyMzA1ZWJjLWI4MTEtMzYzNy1hYTRjLTY2ZWNhMTg3NGYzZCJ9.ewogICJzZXNzaW9uX2lkIiA6ICJrbHNfc2Vzc19hYmNkZWYxMjM0NTY3ODkwIgp9"
+              },
+              "availableCategories": [
+                { "id": "pay_later", "name": "Pay later" },
+                { "id": "pay_over_time", "name": "Financing" }
+              ]
+            },
+            "gatewayResponse": {
+              "transactionState": "PENDING",
+              "gatewayResponseCode": "00",
+              "gatewayResponseMessage": "Session created - awaiting customer authorization"
+            },
+            "transactionProcessingDetails": {
+              "orderId": "ORD-2026-04-12-0001"
+            }
+          }
+        }
+      },
+      "phase2_order": {
+        "description": "Phase 2: Place order after customer approves via Klarna JS SDK. Authorization token from widget callback is sent to create the order.",
+        "chRequest": {
+          "method": "POST",
+          "path": "/checkouts/v1/orders",
+          "headers": {
+            "Content-Type": "application/json",
+            "Client-Request-Id": "klarna-test-auth-002",
+            "Auth-Token-Type": "HMAC",
+            "Authorization": "HMAC <computed>"
+          },
+          "body": {
+            "amount": {
+              "total": 50.00,
+              "currency": "USD"
+            },
+            "paymentMethod": {
+              "provider": "KLARNA",
+              "authorizationToken": "klarna_at_abcdef1234567890"
+            },
+            "merchantDetails": {
+              "merchantId": "PN129867"
+            },
+            "transactionDetails": {
+              "merchantOrderId": "ORD-2026-04-12-0001"
+            },
+            "orderData": {
+              "itemDetails": [
+                {
+                  "itemName": "Premium Widget",
+                  "itemSku": "WIDGET-001",
+                  "quantity": 2,
+                  "amountComponents": {
+                    "unitPrice": 20.00
+                  },
+                  "grossAmount": 40.00,
+                  "taxAmounts": [
+                    {
+                      "taxAmount": 2.80,
+                      "taxRate": 0.07
+                    }
+                  ]
+                },
+                {
+                  "itemName": "Shipping",
+                  "itemSku": "SHIP-STD",
+                  "quantity": 1,
+                  "amountComponents": {
+                    "unitPrice": 10.00
+                  },
+                  "grossAmount": 10.00,
+                  "taxAmounts": [
+                    {
+                      "taxAmount": 0.70,
+                      "taxRate": 0.07
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "apmRequest": {
+          "method": "POST",
+          "path": "/payments/v1/authorizations/klarna_at_abcdef1234567890/order",
+          "baseUrl": "https://api-na.playground.klarna.com",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Basic {Base64(username:password)}"
+          },
+          "body": {
+            "purchase_country": "US",
+            "purchase_currency": "USD",
+            "locale": "en-US",
+            "order_amount": 5000,
+            "order_tax_amount": 350,
+            "merchant_reference1": "ORD-2026-04-12-0001",
+            "order_lines": [
+              {
+                "name": "Premium Widget",
+                "reference": "WIDGET-001",
+                "quantity": 2,
+                "unit_price": 2000,
+                "total_amount": 4000,
+                "total_tax_amount": 280,
+                "tax_rate": 700
+              },
+              {
+                "name": "Shipping",
+                "reference": "SHIP-STD",
+                "quantity": 1,
+                "unit_price": 1000,
+                "total_amount": 1000,
+                "total_tax_amount": 70,
+                "tax_rate": 700
+              }
+            ],
+            "shipping_address": {
+              "given_name": "John",
+              "family_name": "Doe",
+              "email": "john.doe@example.com",
+              "phone": "+12125551234",
+              "street_address": "123 Main St",
+              "city": "New York",
+              "region": "NY",
+              "postal_code": "10001",
+              "country": "US"
+            },
+            "billing_address": {
+              "given_name": "John",
+              "family_name": "Doe",
+              "email": "john.doe@example.com",
+              "phone": "+12125551234",
+              "street_address": "123 Main St",
+              "city": "New York",
+              "region": "NY",
+              "postal_code": "10001",
+              "country": "US"
+            }
+          }
+        },
+        "apmResponse": {
+          "httpStatus": 200,
+          "body": {
+            "order_id": "kls_ord_98765432abcdef",
+            "fraud_status": "ACCEPTED",
+            "authorized_payment_method": {
+              "type": "pay_later"
+            },
+            "order_amount": 5000,
+            "expires_at": "2026-05-10T05:00:00Z",
+            "redirect_url": ""
+          }
+        },
+        "chResponse": {
+          "httpStatus": 200,
+          "body": {
+            "transactionProcessingDetails": {
+              "transactionId": "kls_ord_98765432abcdef",
+              "orderId": "ORD-2026-04-12-0001",
+              "expiresAt": "2026-05-10T05:00:00Z"
+            },
+            "gatewayResponse": {
+              "transactionState": "AUTHORIZED",
+              "gatewayResponseCode": "00",
+              "gatewayResponseMessage": "Approved"
+            },
+            "paymentReceipt": {
+              "approvedAmount": {
+                "total": 50.00,
+                "currency": "USD"
+              }
+            },
+            "paymentMethod": {
+              "provider": "KLARNA",
+              "type": "pay_later"
+            }
+          }
+        }
+      }
+    },
+    "capture": {
+      "description": "Full capture of authorized Klarna order. All line items captured with shipping tracking info.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders/kls_ord_98765432abcdef/capture",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "klarna-test-capture-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {
+          "amount": {
+            "total": 50.00,
+            "currency": "USD"
+          },
+          "orderData": {
+            "itemDetails": [
+              {
+                "itemName": "Premium Widget",
+                "itemSku": "WIDGET-001",
+                "quantity": 2,
+                "amountComponents": {
+                  "unitPrice": 20.00
+                },
+                "grossAmount": 40.00,
+                "taxAmounts": [
+                  {
+                    "taxAmount": 2.80,
+                    "taxRate": 0.07
+                  }
+                ]
+              },
+              {
+                "itemName": "Shipping",
+                "itemSku": "SHIP-STD",
+                "quantity": 1,
+                "amountComponents": {
+                  "unitPrice": 10.00
+                },
+                "grossAmount": 10.00,
+                "taxAmounts": [
+                  {
+                    "taxAmount": 0.70,
+                    "taxRate": 0.07
+                  }
+                ]
+              }
+            ]
+          },
+          "shippingInfo": {
+            "trackingNumber": "1Z999AA10123456784",
+            "shippingCarrier": "UPS"
+          }
+        }
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/ordermanagement/v1/orders/kls_ord_98765432abcdef/captures",
+        "baseUrl": "https://api-na.playground.klarna.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Basic {Base64(username:password)}"
+        },
+        "body": {
+          "captured_amount": 5000,
+          "order_lines": [
+            {
+              "name": "Premium Widget",
+              "reference": "WIDGET-001",
+              "quantity": 2,
+              "unit_price": 2000,
+              "total_amount": 4000,
+              "total_tax_amount": 280,
+              "tax_rate": 700
+            },
+            {
+              "name": "Shipping",
+              "reference": "SHIP-STD",
+              "quantity": 1,
+              "unit_price": 1000,
+              "total_amount": 1000,
+              "total_tax_amount": 70,
+              "tax_rate": 700
+            }
+          ],
+          "shipping_info": [
+            {
+              "tracking_number": "1Z999AA10123456784",
+              "shipping_company": "UPS"
+            }
+          ]
+        }
+      },
+      "apmResponse": {
+        "httpStatus": 201,
+        "headers": {
+          "Location": "https://api-na.playground.klarna.com/ordermanagement/v1/orders/kls_ord_98765432abcdef/captures/kls_cap_capture001abc",
+          "Capture-Id": "kls_cap_capture001abc"
+        },
+        "body": {}
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "kls_ord_98765432abcdef",
+            "captureId": "kls_cap_capture001abc",
+            "orderId": "ORD-2026-04-12-0001"
+          },
+          "gatewayResponse": {
+            "transactionState": "CAPTURED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Capture successful"
+          },
+          "paymentReceipt": {
+            "approvedAmount": {
+              "total": 50.00,
+              "currency": "USD"
+            }
+          }
+        }
+      }
+    },
+    "partial-refund": {
+      "description": "Partial refund of $20.00 for 1x Premium Widget. Refunding one of the two widgets from the captured order.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders/kls_ord_98765432abcdef/refund",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "klarna-test-refund-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {
+          "amount": {
+            "total": 21.40,
+            "currency": "USD"
+          },
+          "refundDescription": "Customer returned 1x Premium Widget",
+          "orderData": {
+            "itemDetails": [
+              {
+                "itemName": "Premium Widget",
+                "itemSku": "WIDGET-001",
+                "quantity": 1,
+                "amountComponents": {
+                  "unitPrice": 20.00
+                },
+                "grossAmount": 20.00,
+                "taxAmounts": [
+                  {
+                    "taxAmount": 1.40,
+                    "taxRate": 0.07
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/ordermanagement/v1/orders/kls_ord_98765432abcdef/refunds",
+        "baseUrl": "https://api-na.playground.klarna.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Basic {Base64(username:password)}"
+        },
+        "body": {
+          "refunded_amount": 2140,
+          "description": "Customer returned 1x Premium Widget",
+          "order_lines": [
+            {
+              "name": "Premium Widget",
+              "reference": "WIDGET-001",
+              "quantity": 1,
+              "unit_price": 2000,
+              "total_amount": 2000,
+              "total_tax_amount": 140,
+              "tax_rate": 700
+            }
+          ]
+        }
+      },
+      "apmResponse": {
+        "httpStatus": 201,
+        "headers": {
+          "Refund-Id": "kls_ref_refund001abc"
+        },
+        "body": {}
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "kls_ord_98765432abcdef",
+            "refundId": "kls_ref_refund001abc",
+            "orderId": "ORD-2026-04-12-0001"
+          },
+          "gatewayResponse": {
+            "transactionState": "REFUNDED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Partial refund successful"
+          },
+          "paymentReceipt": {
+            "refundedAmount": {
+              "total": 21.40,
+              "currency": "USD"
+            }
+          }
+        }
+      }
+    },
+    "cancel": {
+      "description": "Cancel (void) an authorized but uncaptured Klarna order. No request body needed beyond the order ID.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders/kls_ord_98765432abcdef/cancel",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "klarna-test-cancel-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {}
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/ordermanagement/v1/orders/kls_ord_98765432abcdef/cancel",
+        "baseUrl": "https://api-na.playground.klarna.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Basic {Base64(username:password)}"
+        },
+        "body": {}
+      },
+      "apmResponse": {
+        "httpStatus": 204,
+        "body": {}
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "kls_ord_98765432abcdef",
+            "orderId": "ORD-2026-04-12-0001"
+          },
+          "gatewayResponse": {
+            "transactionState": "VOIDED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Order cancelled"
+          }
+        }
+      }
+    }
+  },
+  "validationChecks": {
+    "amountSymmetry": {
+      "authAmount": 50.00,
+      "captureAmount": 50.00,
+      "refundAmount": 21.40,
+      "netAmount": 28.60,
+      "status": "PASS"
+    },
+    "minorUnitConversion": {
+      "decimal_50_00": 5000,
+      "decimal_20_00": 2000,
+      "decimal_10_00": 1000,
+      "decimal_3_50": 350,
+      "decimal_2_80": 280,
+      "decimal_0_70": 70,
+      "decimal_21_40": 2140,
+      "status": "PASS"
+    },
+    "lineItemIntegrity": {
+      "authLineTotal": "40.00 + 10.00 = 50.00",
+      "authTaxTotal": "2.80 + 0.70 = 3.50",
+      "captureLineTotal": "40.00 + 10.00 = 50.00",
+      "refundLineTotal": "20.00 (partial: 1 of 2 widgets)",
+      "status": "PASS"
+    },
+    "currencyPreservation": {
+      "inputCurrency": "USD",
+      "chCurrency": "USD",
+      "apmCurrency": "USD",
+      "status": "PASS"
+    },
+    "idTraceability": {
+      "merchantOrderId": "ORD-2026-04-12-0001",
+      "klarnaSessionId": "kls_sess_abcdef1234567890",
+      "klarnaOrderId": "kls_ord_98765432abcdef",
+      "klarnaCaptureId": "kls_cap_capture001abc",
+      "klarnaRefundId": "kls_ref_refund001abc",
+      "status": "PASS"
+    }
+  }
+}

@@ -1,0 +1,534 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "v2",
+    "ucomVersion": "0.2.3",
+    "snappayVersion": "3.0.9",
+    "generatedAt": "2026-04-12T04:52:00Z",
+    "patternTemplate": "redirect-wallet-v1",
+    "goldenMappingSource": "tech-lead-manual-mapping",
+    "safetyChecksPassed": true
+  },
+  "apm": "cashapp",
+  "apmDisplayName": "Cash App Pay",
+  "pattern": "redirect-wallet",
+  "capabilities": ["auth", "capture", "refund"],
+  "regions": ["US"],
+  "channel": "web",
+  "mappings": {
+    "auth": {
+      "request": [
+        {
+          "source": "authorization.requestedAmount",
+          "sourceType": "number",
+          "target": "amount.total",
+          "targetType": "number",
+          "transform": "NONE",
+          "required": true,
+          "notes": "Both use decimal format"
+        },
+        {
+          "source": "authorization.currencyCode",
+          "sourceType": "string",
+          "target": "amount.currency",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true,
+          "notes": "ISO-4217"
+        },
+        {
+          "source": "authorization.merchantId",
+          "sourceType": "string",
+          "target": "merchantDetails.merchantId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "authorization.storeId",
+          "sourceType": "string",
+          "target": "merchantDetails.storeId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": false
+        },
+        {
+          "source": "authorization.fundingSource.type",
+          "sourceType": "string",
+          "target": "paymentMethod.provider",
+          "targetType": "string",
+          "transform": "MAP_ENUM",
+          "enumMap": { "CASHAPP": "CASHAPP" },
+          "required": true,
+          "notes": "Must add CASHAPP to FundingSourceType enum"
+        },
+        {
+          "source": "authorization.fundingSource.cashApp.grantId",
+          "sourceType": "string",
+          "target": "paymentMethod.paymentToken.tokenData",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true,
+          "notes": "New CashApp object in FundingSource"
+        },
+        {
+          "source": "[header] Client-Request-Id",
+          "sourceType": "string",
+          "target": "[header] Client-Request-Id",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "[header] Api-Key",
+          "sourceType": "string",
+          "target": "[header] Api-Key",
+          "targetType": "string",
+          "transform": "MAP_BRIDGE",
+          "required": true,
+          "notes": "Ucom API key mapped to CH API key via credential vault"
+        },
+        {
+          "source": "[header] Timestamp",
+          "sourceType": "integer",
+          "target": "[header] Timestamp",
+          "targetType": "integer",
+          "transform": "PASSTHROUGH",
+          "required": true,
+          "notes": "Epoch milliseconds"
+        },
+        {
+          "source": "[header] Authorization",
+          "sourceType": "string",
+          "target": "[header] Authorization",
+          "targetType": "string",
+          "transform": "RECOMPUTE",
+          "required": true,
+          "notes": "Must recompute HMAC with CH credentials"
+        }
+      ],
+      "response": [
+        {
+          "source": "transactionProcessingDetails.transactionId",
+          "sourceType": "string",
+          "target": "authorization.fdAuthorizationId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        },
+        {
+          "source": "gatewayResponse.transactionState",
+          "sourceType": "string",
+          "target": "authorization.authStatus",
+          "targetType": "string",
+          "transform": "MAP_ENUM",
+          "enumMap": {
+            "AUTHORIZED": "APPROVED",
+            "DECLINED": "DECLINED",
+            "PAYER_ACTION_REQUIRED": "PENDING"
+          }
+        },
+        {
+          "source": "paymentReceipt.approvedAmount.total",
+          "sourceType": "number",
+          "target": "authorization.approvedAmount",
+          "targetType": "number",
+          "transform": "NONE"
+        },
+        {
+          "source": "order.providerOrderId",
+          "sourceType": "string",
+          "target": "authorization.providerOrderId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "notes": "GRR_ prefix"
+        },
+        {
+          "source": "checkoutInteractions.actions.url",
+          "sourceType": "string",
+          "target": "authorization.fundingSource.cashApp.redirectUrl",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "notes": "Customer redirect URL"
+        },
+        {
+          "source": "checkoutInteractions.actions.code",
+          "sourceType": "string",
+          "target": "authorization.fundingSource.cashApp.qrCodeUrl",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "notes": "QR code URL"
+        },
+        {
+          "source": "order.orderStatus",
+          "sourceType": "string",
+          "target": "authorization.authStatus",
+          "targetType": "string",
+          "transform": "MAP_ENUM",
+          "enumMap": { "PAYER_ACTION_REQUIRED": "PENDING" },
+          "notes": "Supplements gatewayResponse mapping"
+        },
+        {
+          "source": "gatewayResponse.transactionProcessingDetails.orderId",
+          "sourceType": "string",
+          "target": "authorization.orderId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        },
+        {
+          "source": "paymentReceipt.processorResponseDetails.approvalCode",
+          "sourceType": "string",
+          "target": "authorization.approvalCode",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        },
+        {
+          "source": "paymentReceipt.processorResponseDetails.referenceNumber",
+          "sourceType": "string",
+          "target": "authorization.hostReferenceNumber",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        },
+        {
+          "source": "transactionProcessingDetails.transactionTimestamp",
+          "sourceType": "string",
+          "target": "authorization.transactionDateTime",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "notes": "ISO-8601"
+        }
+      ]
+    },
+    "capture": {
+      "request": [
+        {
+          "source": "capture.requestedAmount",
+          "sourceType": "number",
+          "target": "amount.total",
+          "targetType": "number",
+          "transform": "NONE",
+          "required": true
+        },
+        {
+          "source": "capture.currencyCode",
+          "sourceType": "string",
+          "target": "amount.currency",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "{fdAuthorizationId}",
+          "sourceType": "string",
+          "target": "referenceTransactionDetails.referenceTransactionId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true,
+          "notes": "Path parameter to body field"
+        },
+        {
+          "source": "capture.merchantId",
+          "sourceType": "string",
+          "target": "merchantDetails.merchantId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "[static]",
+          "sourceType": "string",
+          "target": "transactionDetails.captureFlag",
+          "targetType": "boolean",
+          "transform": "STATIC",
+          "staticValue": true,
+          "required": true,
+          "notes": "Always true for capture operations"
+        },
+        {
+          "source": "[header] Client-Request-Id",
+          "sourceType": "string",
+          "target": "[header] Client-Request-Id",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "[header] Api-Key",
+          "sourceType": "string",
+          "target": "[header] Api-Key",
+          "targetType": "string",
+          "transform": "MAP_BRIDGE",
+          "required": true
+        },
+        {
+          "source": "[header] Timestamp",
+          "sourceType": "integer",
+          "target": "[header] Timestamp",
+          "targetType": "integer",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "[header] Authorization",
+          "sourceType": "string",
+          "target": "[header] Authorization",
+          "targetType": "string",
+          "transform": "RECOMPUTE",
+          "required": true
+        }
+      ],
+      "response": [
+        {
+          "source": "transactionProcessingDetails.transactionId",
+          "sourceType": "string",
+          "target": "capture.fdCaptureId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        },
+        {
+          "source": "gatewayResponse.transactionState",
+          "sourceType": "string",
+          "target": "capture.captureStatus",
+          "targetType": "string",
+          "transform": "MAP_ENUM",
+          "enumMap": { "CAPTURED": "APPROVED", "DECLINED": "DECLINED" }
+        },
+        {
+          "source": "paymentReceipt.approvedAmount.total",
+          "sourceType": "number",
+          "target": "capture.approvedAmount",
+          "targetType": "number",
+          "transform": "NONE"
+        },
+        {
+          "source": "paymentReceipt.processorResponseDetails.approvalCode",
+          "sourceType": "string",
+          "target": "capture.approvalCode",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        },
+        {
+          "source": "transactionProcessingDetails.transactionTimestamp",
+          "sourceType": "string",
+          "target": "capture.transactionDateTime",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        }
+      ]
+    },
+    "refund": {
+      "request": [
+        {
+          "source": "refund.requestedAmount",
+          "sourceType": "number",
+          "target": "amount.total",
+          "targetType": "number",
+          "transform": "NONE",
+          "required": true,
+          "notes": "Supports partial refund"
+        },
+        {
+          "source": "refund.currencyCode",
+          "sourceType": "string",
+          "target": "amount.currency",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "{fdAuthorizationId}",
+          "sourceType": "string",
+          "target": "referenceTransactionDetails.referenceTransactionId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true,
+          "notes": "Path parameter to body field"
+        },
+        {
+          "source": "refund.merchantId",
+          "sourceType": "string",
+          "target": "merchantDetails.merchantId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "[header] Client-Request-Id",
+          "sourceType": "string",
+          "target": "[header] Client-Request-Id",
+          "targetType": "string",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "[header] Api-Key",
+          "sourceType": "string",
+          "target": "[header] Api-Key",
+          "targetType": "string",
+          "transform": "MAP_BRIDGE",
+          "required": true
+        },
+        {
+          "source": "[header] Timestamp",
+          "sourceType": "integer",
+          "target": "[header] Timestamp",
+          "targetType": "integer",
+          "transform": "PASSTHROUGH",
+          "required": true
+        },
+        {
+          "source": "[header] Authorization",
+          "sourceType": "string",
+          "target": "[header] Authorization",
+          "targetType": "string",
+          "transform": "RECOMPUTE",
+          "required": true
+        }
+      ],
+      "response": [
+        {
+          "source": "transactionProcessingDetails.transactionId",
+          "sourceType": "string",
+          "target": "refund.fdRefundId",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        },
+        {
+          "source": "gatewayResponse.transactionState",
+          "sourceType": "string",
+          "target": "refund.refundStatus",
+          "targetType": "string",
+          "transform": "MAP_ENUM",
+          "enumMap": { "REFUNDED": "APPROVED", "DECLINED": "DECLINED" }
+        },
+        {
+          "source": "paymentReceipt.approvedAmount.total",
+          "sourceType": "number",
+          "target": "refund.approvedAmount",
+          "targetType": "number",
+          "transform": "NONE"
+        },
+        {
+          "source": "paymentReceipt.processorResponseDetails.referenceNumber",
+          "sourceType": "string",
+          "target": "refund.hostReferenceNumber",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        },
+        {
+          "source": "transactionProcessingDetails.transactionTimestamp",
+          "sourceType": "string",
+          "target": "refund.transactionDateTime",
+          "targetType": "string",
+          "transform": "PASSTHROUGH"
+        }
+      ]
+    }
+  },
+  "conditionalRouting": {
+    "SCOPE_TYPE_ROUTE": {
+      "description": "Routes CashApp transactions based on scope type to correct Commerce Hub processing path",
+      "rules": [
+        {
+          "condition": "paymentMethod.provider == 'CASHAPP' AND transactionDetails.operationType == 'AUTHORIZE'",
+          "target": "checkouts/v1/orders",
+          "method": "POST",
+          "headers": { "Content-Type": "application/json" }
+        },
+        {
+          "condition": "paymentMethod.provider == 'CASHAPP' AND transactionDetails.captureFlag == true",
+          "target": "checkouts/v1/orders",
+          "method": "POST",
+          "headers": { "Content-Type": "application/json" },
+          "notes": "Capture requires referenceTransactionId from prior auth"
+        },
+        {
+          "condition": "paymentMethod.provider == 'CASHAPP' AND transactionDetails.operationType == 'REFUND'",
+          "target": "checkouts/v1/orders",
+          "method": "POST",
+          "headers": { "Content-Type": "application/json" },
+          "notes": "Refund requires referenceTransactionId from prior capture"
+        }
+      ]
+    }
+  },
+  "authScheme": {
+    "type": "HMAC",
+    "algorithm": "HMAC-SHA256",
+    "headers": {
+      "Api-Key": { "source": "credential-vault", "required": true },
+      "Timestamp": { "source": "generated", "format": "epoch-ms", "required": true },
+      "Auth-Token-Type": { "source": "static", "value": "HMAC", "required": true },
+      "Client-Request-Id": { "source": "passthrough-or-generated", "format": "uuid", "required": true },
+      "Authorization": { "source": "computed", "required": true }
+    },
+    "signatureMessage": "Api-Key + Client-Request-Id + Timestamp + RequestBody",
+    "signatureEncoding": "Base64"
+  },
+  "lifecycle": {
+    "pattern": "redirect-wallet",
+    "steps": [
+      {
+        "step": 1,
+        "name": "INITIALIZE",
+        "description": "Create order with CashApp as payment method",
+        "endpoint": "POST /checkouts/v1/orders",
+        "expectedState": "PAYER_ACTION_REQUIRED"
+      },
+      {
+        "step": 2,
+        "name": "REDIRECT",
+        "description": "Redirect customer to CashApp for approval",
+        "source": "checkoutInteractions.actions.url",
+        "alternative": "checkoutInteractions.actions.code (QR code)",
+        "expectedState": "PAYER_ACTION_REQUIRED"
+      },
+      {
+        "step": 3,
+        "name": "CUSTOMER_APPROVAL",
+        "description": "Customer approves payment in CashApp",
+        "externalFlow": true,
+        "callbackUrl": "checkoutInteractions.returnUrls.successUrl"
+      },
+      {
+        "step": 4,
+        "name": "AUTHORIZE",
+        "description": "Commerce Hub confirms authorization after customer approval",
+        "expectedState": "AUTHORIZED"
+      },
+      {
+        "step": 5,
+        "name": "CAPTURE",
+        "description": "Capture the authorized amount",
+        "endpoint": "POST /checkouts/v1/orders",
+        "expectedState": "CAPTURED",
+        "optional": true,
+        "notes": "Required only for auth-then-capture flows; sale flows auto-capture"
+      },
+      {
+        "step": 6,
+        "name": "REFUND",
+        "description": "Refund captured amount (full or partial)",
+        "endpoint": "POST /checkouts/v1/orders",
+        "expectedState": "REFUNDED",
+        "optional": true
+      }
+    ],
+    "timeouts": {
+      "customerApprovalWindowMs": 900000,
+      "authToCaptureTtlMs": 604800000,
+      "notes": "15 min customer approval window; 7 day auth-to-capture TTL"
+    }
+  },
+  "safetyChecks": {
+    "amountSymmetry": "PASS",
+    "currencyPreservation": "PASS",
+    "idUniqueness": "PASS_WITH_NOTE",
+    "idUniquenessNote": "providerOrderId uses GRR_ prefix; fdAuthorizationId is CH-generated transactionId",
+    "tier1Coverage": "PASS",
+    "tier1CoverageNote": "All Tier-1 fields (amount, currency, merchantId, transactionId, status) mapped bidirectionally",
+    "bidirectionalCompleteness": "PASS",
+    "bidirectionalCompletenessNote": "10 request + 11 response fields mapped for auth; capture and refund follow same pattern",
+    "returnUrlValidation": "PASS",
+    "returnUrlValidationNote": "redirectUrl and qrCodeUrl both passed through from checkoutInteractions.actions"
+  }
+}

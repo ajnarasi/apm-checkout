@@ -1,0 +1,710 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "v2",
+    "ucomVersion": "0.2.3",
+    "snappayVersion": "3.0.9",
+    "generatedAt": "2026-04-11T00:00:00Z",
+    "patternTemplate": "redirect-wallet-v1",
+    "goldenMappingSource": "tech-lead-manual-mapping",
+    "safetyChecksPassed": true
+  },
+  "platformFilter": {
+    "ucom": { "included": true },
+    "snappay": { "included": false }
+  },
+  "testConfig": {
+    "environment": "sandbox",
+    "baseAmount": 15.10,
+    "currency": "USD",
+    "region": "US",
+    "merchantId": "100012345678901",
+    "storeId": "12345678901",
+    "terminalId": "10000001"
+  },
+  "fixtures": {
+    "layer1_ch_to_cashapp": {
+      "auth": {
+        "description": "Layer 1: Commerce Hub to CashApp auth (Customer Request + Payment)",
+        "customerRequest": {
+          "chRequest": {
+            "body": {
+              "amount": {
+                "total": 15.10,
+                "currency": "USD"
+              },
+              "transactionDetails": {
+                "operationType": "AUTHORIZE"
+              },
+              "paymentMethod": {
+                "provider": "CASHAPP"
+              },
+              "merchantDetails": {
+                "processorMerchantId": "MERCH_SANDBOX_001",
+                "merchantId": "100012345678901"
+              },
+              "transactionProcessingDetails": {
+                "transactionId": "txn-ch-cashapp-auth-001"
+              },
+              "checkoutInteractions": {
+                "returnUrls": {
+                  "successUrl": "https://example.com/return"
+                },
+                "channel": "WEB"
+              }
+            }
+          },
+          "expectedCashAppRequest": {
+            "body": {
+              "request": {
+                "actions": [
+                  {
+                    "amount": 1510,
+                    "currency": "USD",
+                    "scope_id": "MERCH_SANDBOX_001",
+                    "type": "ONE_TIME_PAYMENT"
+                  }
+                ],
+                "redirect_url": "https://example.com/return",
+                "reference_id": "txn-ch-cashapp-auth-001",
+                "channel": "ONLINE"
+              },
+              "idempotency_key": "txn-ch-cashapp-auth-001"
+            }
+          },
+          "mockCashAppResponse": {
+            "httpStatus": 200,
+            "body": {
+              "request": {
+                "id": "GRR_sandbox_001",
+                "status": "PENDING",
+                "created_at": "2026-04-11T00:00:00.000Z",
+                "expires_at": "2026-04-11T01:00:00.000Z",
+                "channel": "ONLINE",
+                "auth_flow_triggers": {
+                  "desktop_url": "https://sandbox.cash.app/pay/session-001",
+                  "mobile_url": "cashapp://pay/session-001",
+                  "qr_code_image_url": "https://sandbox.cash.app/qr/session-001",
+                  "refreshes_at": "2026-04-11T00:05:00.000Z"
+                },
+                "origin": {
+                  "type": "DIRECT"
+                }
+              },
+              "requester_profile": {
+                "name": "Test Merchant"
+              }
+            }
+          },
+          "expectedChResponse": {
+            "body": {
+              "order": {
+                "providerOrderId": "GRR_sandbox_001",
+                "orderStatus": "PAYER_ACTION_REQUIRED"
+              },
+              "checkoutInteractions": {
+                "actions": {
+                  "url": "https://sandbox.cash.app/pay/session-001",
+                  "code": "https://sandbox.cash.app/qr/session-001"
+                },
+                "channel": "WEB"
+              },
+              "transactionProcessingDetails": {
+                "transactionTimestamp": "2026-04-11T00:00:00.000Z"
+              },
+              "dynamicDescriptors": {
+                "merchantName": "Test Merchant"
+              }
+            }
+          }
+        },
+        "payment": {
+          "chRequest": {
+            "body": {
+              "amount": {
+                "total": 15.10,
+                "currency": "USD"
+              },
+              "transactionDetails": {
+                "operationType": "AUTHORIZE"
+              },
+              "paymentMethod": {
+                "paymentToken": {
+                  "tokenData": "GRG_sandbox_grant_001"
+                }
+              },
+              "transactionProcessingDetails": {
+                "transactionId": "txn-ch-cashapp-pay-001"
+              }
+            }
+          },
+          "expectedCashAppRequest": {
+            "body": {
+              "payment": {
+                "grant_id": "GRG_sandbox_grant_001",
+                "amount": 1510,
+                "currency": "USD",
+                "capture": false,
+                "reference_id": "txn-ch-cashapp-pay-001"
+              }
+            }
+          },
+          "mockCashAppResponse": {
+            "httpStatus": 200,
+            "body": {
+              "payment": {
+                "id": "PWC_sandbox_pay_001",
+                "amount": 1510,
+                "currency": "USD",
+                "status": "APPROVED"
+              }
+            }
+          },
+          "expectedChResponse": {
+            "body": {
+              "paymentReceipt": {
+                "processorResponseDetails": {
+                  "referenceNumber": "PWC_sandbox_pay_001"
+                },
+                "approvedAmount": {
+                  "total": 15.10,
+                  "currency": "USD"
+                }
+              },
+              "paymentMethod": {
+                "paymentSource": {
+                  "paymentToken": {
+                    "tokenData": "GRG_sandbox_grant_001"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "capture": {
+        "description": "Layer 1: Commerce Hub to CashApp capture",
+        "chRequest": {
+          "body": {
+            "amount": {
+              "total": 15.10,
+              "currency": "USD"
+            },
+            "transactionDetails": {
+              "operationType": "CAPTURE"
+            },
+            "paymentMethod": {
+              "paymentToken": {
+                "tokenData": "GRG_sandbox_grant_001"
+              }
+            },
+            "transactionProcessingDetails": {
+              "transactionId": "txn-ch-cashapp-cap-001"
+            }
+          }
+        },
+        "expectedCashAppRequest": {
+          "body": {
+            "payment": {
+              "grant_id": "GRG_sandbox_grant_001",
+              "amount": 1510,
+              "currency": "USD",
+              "capture": true,
+              "reference_id": "txn-ch-cashapp-cap-001"
+            }
+          }
+        },
+        "mockCashAppResponse": {
+          "httpStatus": 200,
+          "body": {
+            "payment": {
+              "id": "PWC_sandbox_cap_001",
+              "amount": 1510,
+              "currency": "USD",
+              "status": "APPROVED"
+            }
+          }
+        },
+        "expectedChResponse": {
+          "body": {
+            "paymentReceipt": {
+              "processorResponseDetails": {
+                "referenceNumber": "PWC_sandbox_cap_001"
+              },
+              "approvedAmount": {
+                "total": 15.10,
+                "currency": "USD"
+              }
+            }
+          }
+        }
+      },
+      "refund": {
+        "description": "Layer 1: Commerce Hub to CashApp refund",
+        "chRequest": {
+          "body": {
+            "amount": {
+              "total": 15.10,
+              "currency": "USD"
+            },
+            "referenceTransactionDetails": {
+              "referenceTransactionId": "PWC_sandbox_pay_001"
+            },
+            "transactionProcessingDetails": {
+              "transactionId": "txn-ch-cashapp-ref-001"
+            }
+          }
+        },
+        "expectedCashAppRequest": {
+          "body": {
+            "refund": {
+              "payment_id": "PWC_sandbox_pay_001",
+              "amount": 1510,
+              "currency": "USD",
+              "reference_id": "txn-ch-cashapp-ref-001"
+            }
+          }
+        },
+        "mockCashAppResponse": {
+          "httpStatus": 200,
+          "body": {
+            "refund": {
+              "id": "PWCR_sandbox_ref_001",
+              "amount": 1510,
+              "currency": "USD",
+              "status": "APPROVED"
+            }
+          }
+        },
+        "expectedChResponse": {
+          "body": {
+            "paymentReceipt": {
+              "processorResponseDetails": {
+                "referenceNumber": "PWCR_sandbox_ref_001"
+              },
+              "approvedAmount": {
+                "total": 15.10,
+                "currency": "USD"
+              }
+            }
+          }
+        }
+      }
+    },
+    "layer2_ucom_chain": {
+      "auth": {
+        "description": "Full chain: Ucom --> Commerce Hub --> CashApp auth",
+        "ucomRequest": {
+          "headers": {
+            "Content-Type": "application/json",
+            "Api-Key": "sandbox-ucom-api-key-001",
+            "Timestamp": 1744329600000,
+            "Authorization": "dGVzdC1obWFjLXNpZ25hdHVyZS11Y29t",
+            "Client-Request-Id": "cashapp-ucom-auth-001"
+          },
+          "body": {
+            "authorization": {
+              "requestedAmount": 15.10,
+              "currencyCode": "USD",
+              "merchantId": "100012345678901",
+              "storeId": "12345678901",
+              "fundingSource": {
+                "type": "CASHAPP",
+                "cashApp": {
+                  "grantId": "GRG_sandbox_grant_001"
+                }
+              }
+            }
+          }
+        },
+        "expectedTranslatedChRequest": {
+          "headers": {
+            "Content-Type": "application/json",
+            "Api-Key": "sandbox-ch-api-key-001",
+            "Timestamp": 1744329600000,
+            "Auth-Token-Type": "HMAC",
+            "Authorization": "dGVzdC1obWFjLXNpZ25hdHVyZS1jaA==",
+            "Client-Request-Id": "cashapp-ucom-auth-001"
+          },
+          "body": {
+            "amount": {
+              "total": 15.10,
+              "currency": "USD"
+            },
+            "merchantDetails": {
+              "merchantId": "100012345678901",
+              "storeId": "12345678901"
+            },
+            "paymentMethod": {
+              "provider": "CASHAPP",
+              "paymentToken": {
+                "tokenData": "GRG_sandbox_grant_001"
+              }
+            }
+          }
+        },
+        "mockCommerceHubResponse": {
+          "httpStatus": 200,
+          "body": {
+            "transactionProcessingDetails": {
+              "transactionId": "84d3be98-2a05-4c0b-9c6a-deed90b1e152",
+              "transactionTimestamp": "2026-04-11T00:00:00.000Z"
+            },
+            "gatewayResponse": {
+              "transactionState": "PAYER_ACTION_REQUIRED",
+              "transactionProcessingDetails": {
+                "orderId": "CHG-aabb1122-3344"
+              }
+            },
+            "paymentReceipt": {
+              "approvedAmount": {
+                "total": 15.10,
+                "currency": "USD"
+              },
+              "processorResponseDetails": {
+                "approvalCode": "OK1234",
+                "referenceNumber": "REF-SANDBOX-001"
+              }
+            },
+            "order": {
+              "providerOrderId": "GRR_sandbox_order_001",
+              "orderStatus": "PAYER_ACTION_REQUIRED"
+            },
+            "checkoutInteractions": {
+              "actions": {
+                "url": "https://sandbox.cash.app/pay/test-session-001?redirect=https://example.com/return",
+                "code": "https://sandbox.cash.app/qr/test-session-001"
+              },
+              "returnUrls": {
+                "successUrl": "https://example.com/return?status=success",
+                "cancelUrl": "https://example.com/return?status=cancel"
+              }
+            }
+          }
+        },
+        "expectedUcomResponse": {
+          "authorization": {
+            "fdAuthorizationId": "84d3be98-2a05-4c0b-9c6a-deed90b1e152",
+            "authStatus": "PENDING",
+            "approvedAmount": 15.10,
+            "providerOrderId": "GRR_sandbox_order_001",
+            "orderId": "CHG-aabb1122-3344",
+            "approvalCode": "OK1234",
+            "hostReferenceNumber": "REF-SANDBOX-001",
+            "transactionDateTime": "2026-04-11T00:00:00.000Z",
+            "fundingSource": {
+              "cashApp": {
+                "redirectUrl": "https://sandbox.cash.app/pay/test-session-001?redirect=https://example.com/return",
+                "qrCodeUrl": "https://sandbox.cash.app/qr/test-session-001"
+              }
+            }
+          }
+        }
+      },
+      "capture": {
+        "description": "Full chain: Ucom --> Commerce Hub --> CashApp capture",
+        "ucomRequest": {
+          "headers": {
+            "Content-Type": "application/json",
+            "Api-Key": "sandbox-ucom-api-key-001",
+            "Timestamp": 1744330200000,
+            "Authorization": "dGVzdC1obWFjLWNhcHR1cmUtdWNvbQ==",
+            "Client-Request-Id": "cashapp-ucom-capture-001"
+          },
+          "pathParams": {
+            "fdAuthorizationId": "84d3be98-2a05-4c0b-9c6a-deed90b1e152"
+          },
+          "body": {
+            "capture": {
+              "requestedAmount": 15.10,
+              "currencyCode": "USD",
+              "merchantId": "100012345678901"
+            }
+          }
+        },
+        "expectedTranslatedChRequest": {
+          "headers": {
+            "Content-Type": "application/json",
+            "Api-Key": "sandbox-ch-api-key-001",
+            "Timestamp": 1744330200000,
+            "Auth-Token-Type": "HMAC",
+            "Authorization": "dGVzdC1obWFjLWNhcHR1cmUtY2g=",
+            "Client-Request-Id": "cashapp-ucom-capture-001"
+          },
+          "body": {
+            "amount": {
+              "total": 15.10,
+              "currency": "USD"
+            },
+            "merchantDetails": {
+              "merchantId": "100012345678901"
+            },
+            "referenceTransactionDetails": {
+              "referenceTransactionId": "84d3be98-2a05-4c0b-9c6a-deed90b1e152"
+            },
+            "transactionDetails": {
+              "captureFlag": true
+            }
+          }
+        },
+        "mockCommerceHubResponse": {
+          "httpStatus": 200,
+          "body": {
+            "transactionProcessingDetails": {
+              "transactionId": "cap-55667788-aabb-ccdd",
+              "transactionTimestamp": "2026-04-11T00:10:00.000Z"
+            },
+            "gatewayResponse": {
+              "transactionState": "CAPTURED"
+            },
+            "paymentReceipt": {
+              "approvedAmount": {
+                "total": 15.10,
+                "currency": "USD"
+              },
+              "processorResponseDetails": {
+                "approvalCode": "CAP5678"
+              }
+            }
+          }
+        },
+        "expectedUcomResponse": {
+          "capture": {
+            "fdCaptureId": "cap-55667788-aabb-ccdd",
+            "captureStatus": "APPROVED",
+            "approvedAmount": 15.10,
+            "approvalCode": "CAP5678",
+            "transactionDateTime": "2026-04-11T00:10:00.000Z"
+          }
+        }
+      },
+      "refund": {
+        "description": "Full chain: Ucom --> Commerce Hub --> CashApp refund",
+        "ucomRequest": {
+          "headers": {
+            "Content-Type": "application/json",
+            "Api-Key": "sandbox-ucom-api-key-001",
+            "Timestamp": 1744333800000,
+            "Authorization": "dGVzdC1obWFjLXJlZnVuZC11Y29t",
+            "Client-Request-Id": "cashapp-ucom-refund-001"
+          },
+          "pathParams": {
+            "fdAuthorizationId": "84d3be98-2a05-4c0b-9c6a-deed90b1e152"
+          },
+          "body": {
+            "refund": {
+              "requestedAmount": 15.10,
+              "currencyCode": "USD",
+              "merchantId": "100012345678901"
+            }
+          }
+        },
+        "expectedTranslatedChRequest": {
+          "headers": {
+            "Content-Type": "application/json",
+            "Api-Key": "sandbox-ch-api-key-001",
+            "Timestamp": 1744333800000,
+            "Auth-Token-Type": "HMAC",
+            "Authorization": "dGVzdC1obWFjLXJlZnVuZC1jaA==",
+            "Client-Request-Id": "cashapp-ucom-refund-001"
+          },
+          "body": {
+            "amount": {
+              "total": 15.10,
+              "currency": "USD"
+            },
+            "merchantDetails": {
+              "merchantId": "100012345678901"
+            },
+            "referenceTransactionDetails": {
+              "referenceTransactionId": "84d3be98-2a05-4c0b-9c6a-deed90b1e152"
+            }
+          }
+        },
+        "mockCommerceHubResponse": {
+          "httpStatus": 200,
+          "body": {
+            "transactionProcessingDetails": {
+              "transactionId": "ref-99887766-eeff",
+              "transactionTimestamp": "2026-04-11T01:10:00.000Z"
+            },
+            "gatewayResponse": {
+              "transactionState": "REFUNDED"
+            },
+            "paymentReceipt": {
+              "approvedAmount": {
+                "total": 15.10,
+                "currency": "USD"
+              },
+              "processorResponseDetails": {
+                "referenceNumber": "REF-REFUND-001"
+              }
+            }
+          }
+        },
+        "expectedUcomResponse": {
+          "refund": {
+            "fdRefundId": "ref-99887766-eeff",
+            "refundStatus": "APPROVED",
+            "approvedAmount": 15.10,
+            "hostReferenceNumber": "REF-REFUND-001",
+            "transactionDateTime": "2026-04-11T01:10:00.000Z"
+          }
+        }
+      },
+      "partialRefund": {
+        "description": "Full chain: Ucom --> Commerce Hub --> CashApp partial refund ($5.00 of $15.10)",
+        "ucomRequest": {
+          "headers": {
+            "Content-Type": "application/json",
+            "Api-Key": "sandbox-ucom-api-key-001",
+            "Timestamp": 1744337400000,
+            "Authorization": "dGVzdC1obWFjLXBhcnRpYWwtcmVmdW5k",
+            "Client-Request-Id": "cashapp-ucom-partial-refund-001"
+          },
+          "pathParams": {
+            "fdAuthorizationId": "84d3be98-2a05-4c0b-9c6a-deed90b1e152"
+          },
+          "body": {
+            "refund": {
+              "requestedAmount": 5.00,
+              "currencyCode": "USD",
+              "merchantId": "100012345678901"
+            }
+          }
+        },
+        "expectedTranslatedChRequest": {
+          "body": {
+            "amount": {
+              "total": 5.00,
+              "currency": "USD"
+            },
+            "merchantDetails": {
+              "merchantId": "100012345678901"
+            },
+            "referenceTransactionDetails": {
+              "referenceTransactionId": "84d3be98-2a05-4c0b-9c6a-deed90b1e152"
+            }
+          }
+        },
+        "mockCommerceHubResponse": {
+          "httpStatus": 200,
+          "body": {
+            "transactionProcessingDetails": {
+              "transactionId": "ref-partial-001",
+              "transactionTimestamp": "2026-04-11T02:10:00.000Z"
+            },
+            "gatewayResponse": {
+              "transactionState": "REFUNDED"
+            },
+            "paymentReceipt": {
+              "approvedAmount": {
+                "total": 5.00,
+                "currency": "USD"
+              },
+              "processorResponseDetails": {
+                "referenceNumber": "REF-PARTIAL-001"
+              }
+            }
+          }
+        },
+        "expectedUcomResponse": {
+          "refund": {
+            "fdRefundId": "ref-partial-001",
+            "refundStatus": "APPROVED",
+            "approvedAmount": 5.00,
+            "hostReferenceNumber": "REF-PARTIAL-001",
+            "transactionDateTime": "2026-04-11T02:10:00.000Z"
+          }
+        }
+      }
+    },
+    "errorScenarios": {
+      "invalidRequest": {
+        "description": "Missing required amount field",
+        "mockCommerceHubResponse": {
+          "httpStatus": 400,
+          "body": {
+            "error": {
+              "type": "INVALID_REQUEST",
+              "message": "amount.total is required",
+              "field": "amount.total"
+            }
+          }
+        },
+        "expectedUcomResponse": {
+          "httpStatus": 400,
+          "error": {
+            "code": "BadRequest",
+            "message": "amount.total is required"
+          }
+        }
+      },
+      "authenticationFailure": {
+        "description": "Invalid API credentials",
+        "mockCommerceHubResponse": {
+          "httpStatus": 401,
+          "body": {
+            "error": {
+              "type": "AUTHENTICATION_ERROR",
+              "message": "Invalid API credentials"
+            }
+          }
+        },
+        "expectedUcomResponse": {
+          "httpStatus": 401,
+          "error": {
+            "code": "Unauthorized",
+            "message": "Invalid API credentials"
+          }
+        }
+      },
+      "providerTimeout": {
+        "description": "CashApp provider did not respond within SLA",
+        "mockCommerceHubResponse": {
+          "httpStatus": 504,
+          "body": {
+            "error": {
+              "type": "PROVIDER_TIMEOUT",
+              "message": "CashApp provider timeout"
+            }
+          }
+        },
+        "expectedUcomResponse": {
+          "httpStatus": 500,
+          "error": {
+            "code": "ServerError",
+            "message": "CashApp provider timeout"
+          }
+        }
+      },
+      "declinedTransaction": {
+        "description": "CashApp declined the payment",
+        "mockCommerceHubResponse": {
+          "httpStatus": 200,
+          "body": {
+            "transactionProcessingDetails": {
+              "transactionId": "dec-11223344-5566"
+            },
+            "gatewayResponse": {
+              "transactionState": "DECLINED"
+            },
+            "paymentReceipt": {
+              "approvedAmount": {
+                "total": 0,
+                "currency": "USD"
+              }
+            }
+          }
+        },
+        "expectedUcomResponse": {
+          "authorization": {
+            "fdAuthorizationId": "dec-11223344-5566",
+            "authStatus": "DECLINED",
+            "approvedAmount": 0
+          }
+        }
+      }
+    }
+  }
+}

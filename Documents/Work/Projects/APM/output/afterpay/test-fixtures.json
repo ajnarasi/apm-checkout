@@ -1,0 +1,601 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "v2",
+    "generatedAt": "2026-04-12T05:30:00Z",
+    "patternTemplate": "server-bnpl-v1",
+    "goldenMappingSource": "NONE -- generated from BNPL template + provider API docs",
+    "confidence": "generated"
+  },
+  "testContext": {
+    "merchant": "SANDBOX_MERCHANT",
+    "sandbox": "https://global-api-sandbox.afterpay.com",
+    "region": "US",
+    "currency": "USD",
+    "totalAmount": 50.00,
+    "totalAmountString": "50.00",
+    "lineItems": [
+      {
+        "name": "Premium Widget",
+        "quantity": 2,
+        "unitPrice": 20.00,
+        "unitPriceString": "20.00",
+        "lineTotal": 40.00,
+        "lineTotalString": "40.00",
+        "sku": "WIDGET-001"
+      },
+      {
+        "name": "Shipping",
+        "quantity": 1,
+        "unitPrice": 10.00,
+        "unitPriceString": "10.00",
+        "lineTotal": 10.00,
+        "lineTotalString": "10.00",
+        "sku": "SHIP-STD"
+      }
+    ],
+    "customer": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@example.com",
+      "phone": "+12125551234"
+    },
+    "shippingAddress": {
+      "street": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "postalCode": "10001",
+      "country": "US"
+    },
+    "billingAddress": {
+      "street": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "postalCode": "10001",
+      "country": "US"
+    }
+  },
+  "fixtures": {
+    "auth": {
+      "phase1_checkout": {
+        "description": "Phase 1: Create Afterpay checkout. Merchant sends request, CH creates checkout with Afterpay, returns token + redirect URL.",
+        "chRequest": {
+          "method": "POST",
+          "path": "/checkouts/v1/orders",
+          "headers": {
+            "Content-Type": "application/json",
+            "Client-Request-Id": "afterpay-test-auth-001",
+            "Auth-Token-Type": "HMAC",
+            "Authorization": "HMAC <computed>"
+          },
+          "body": {
+            "amount": {
+              "total": 50.00,
+              "currency": "USD"
+            },
+            "paymentMethod": {
+              "provider": "AFTERPAY"
+            },
+            "merchantDetails": {
+              "merchantId": "SANDBOX_MERCHANT"
+            },
+            "transactionDetails": {
+              "merchantOrderId": "ORD-2026-04-12-0001"
+            },
+            "customer": {
+              "email": "john.doe@example.com",
+              "firstName": "John",
+              "lastName": "Doe",
+              "phone": {
+                "phoneNumber": "+12125551234"
+              }
+            },
+            "shippingAddress": {
+              "firstName": "John",
+              "lastName": "Doe",
+              "address": {
+                "street": "123 Main St",
+                "city": "New York",
+                "stateOrProvince": "NY",
+                "postalCode": "10001",
+                "country": "US"
+              }
+            },
+            "billingAddress": {
+              "firstName": "John",
+              "lastName": "Doe",
+              "address": {
+                "street": "123 Main St",
+                "city": "New York",
+                "stateOrProvince": "NY",
+                "postalCode": "10001",
+                "country": "US"
+              }
+            },
+            "orderData": {
+              "itemDetails": [
+                {
+                  "itemName": "Premium Widget",
+                  "productSKU": "WIDGET-001",
+                  "quantity": 2,
+                  "amountComponents": {
+                    "unitPrice": 20.00
+                  }
+                },
+                {
+                  "itemName": "Shipping",
+                  "productSKU": "SHIP-STD",
+                  "quantity": 1,
+                  "amountComponents": {
+                    "unitPrice": 10.00
+                  }
+                }
+              ]
+            },
+            "checkoutInteractions": {
+              "returnUrls": {
+                "successUrl": "https://merchant.example.com/afterpay/confirm",
+                "cancelUrl": "https://merchant.example.com/afterpay/cancel"
+              }
+            }
+          }
+        },
+        "apmRequest": {
+          "method": "POST",
+          "path": "/v2/checkouts",
+          "baseUrl": "https://global-api-sandbox.afterpay.com",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Basic {Base64(username:password)}"
+          },
+          "body": {
+            "amount": {
+              "amount": "50.00",
+              "currency": "USD"
+            },
+            "consumer": {
+              "givenNames": "John",
+              "surname": "Doe",
+              "email": "john.doe@example.com",
+              "phoneNumber": "+12125551234"
+            },
+            "shipping": {
+              "name": "John Doe",
+              "line1": "123 Main St",
+              "area1": "New York",
+              "region": "NY",
+              "postcode": "10001",
+              "countryCode": "US"
+            },
+            "billing": {
+              "name": "John Doe",
+              "line1": "123 Main St",
+              "area1": "New York",
+              "region": "NY",
+              "postcode": "10001",
+              "countryCode": "US"
+            },
+            "items": [
+              {
+                "name": "Premium Widget",
+                "sku": "WIDGET-001",
+                "quantity": 2,
+                "price": {
+                  "amount": "20.00",
+                  "currency": "USD"
+                }
+              },
+              {
+                "name": "Shipping",
+                "sku": "SHIP-STD",
+                "quantity": 1,
+                "price": {
+                  "amount": "10.00",
+                  "currency": "USD"
+                }
+              }
+            ],
+            "merchantReference": "ORD-2026-04-12-0001",
+            "merchant": {
+              "redirectConfirmUrl": "https://merchant.example.com/afterpay/confirm",
+              "redirectCancelUrl": "https://merchant.example.com/afterpay/cancel"
+            }
+          }
+        },
+        "apmResponse": {
+          "httpStatus": 200,
+          "body": {
+            "token": "ap_checkout_token_abcdef1234567890",
+            "expires": "2026-04-12T06:30:00Z",
+            "redirectCheckoutUrl": "https://portal.sandbox.afterpay.com/us/checkout/?token=ap_checkout_token_abcdef1234567890"
+          }
+        },
+        "chResponse": {
+          "httpStatus": 200,
+          "body": {
+            "paymentMethod": {
+              "provider": "AFTERPAY",
+              "paymentToken": {
+                "tokenData": "ap_checkout_token_abcdef1234567890"
+              }
+            },
+            "checkoutInteractions": {
+              "actions": {
+                "url": "https://portal.sandbox.afterpay.com/us/checkout/?token=ap_checkout_token_abcdef1234567890"
+              }
+            },
+            "gatewayResponse": {
+              "transactionState": "PENDING",
+              "gatewayResponseCode": "00",
+              "gatewayResponseMessage": "Checkout created -- awaiting customer authorization via redirect"
+            },
+            "transactionProcessingDetails": {
+              "orderId": "ORD-2026-04-12-0001"
+            }
+          }
+        }
+      },
+      "phase2_auth": {
+        "description": "Phase 2: Auth (deferred capture) after customer approves on Afterpay and returns to merchant. Checkout token is sent to authorize the payment.",
+        "chRequest": {
+          "method": "POST",
+          "path": "/checkouts/v1/orders",
+          "headers": {
+            "Content-Type": "application/json",
+            "Client-Request-Id": "afterpay-test-auth-002",
+            "Auth-Token-Type": "HMAC",
+            "Authorization": "HMAC <computed>"
+          },
+          "body": {
+            "amount": {
+              "total": 50.00,
+              "currency": "USD"
+            },
+            "paymentMethod": {
+              "provider": "AFTERPAY",
+              "paymentToken": {
+                "tokenData": "ap_checkout_token_abcdef1234567890"
+              }
+            },
+            "merchantDetails": {
+              "merchantId": "SANDBOX_MERCHANT"
+            },
+            "transactionDetails": {
+              "merchantOrderId": "ORD-2026-04-12-0001"
+            }
+          }
+        },
+        "apmRequest": {
+          "method": "POST",
+          "path": "/v2/payments/auth",
+          "baseUrl": "https://global-api-sandbox.afterpay.com",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Basic {Base64(username:password)}"
+          },
+          "body": {
+            "token": "ap_checkout_token_abcdef1234567890",
+            "merchantReference": "ORD-2026-04-12-0001"
+          }
+        },
+        "apmResponse": {
+          "httpStatus": 200,
+          "body": {
+            "id": "ap_ord_98765432abcdef",
+            "token": "ap_checkout_token_abcdef1234567890",
+            "status": "APPROVED",
+            "created": "2026-04-12T05:35:00Z",
+            "originalAmount": {
+              "amount": "50.00",
+              "currency": "USD"
+            },
+            "openToCaptureAmount": {
+              "amount": "50.00",
+              "currency": "USD"
+            },
+            "paymentState": "AUTH_APPROVED",
+            "merchantReference": "ORD-2026-04-12-0001",
+            "events": [
+              {
+                "type": "AUTH_APPROVED",
+                "created": "2026-04-12T05:35:00Z",
+                "amount": {
+                  "amount": "50.00",
+                  "currency": "USD"
+                }
+              }
+            ]
+          }
+        },
+        "chResponse": {
+          "httpStatus": 200,
+          "body": {
+            "transactionProcessingDetails": {
+              "transactionId": "ap_ord_98765432abcdef",
+              "orderId": "ORD-2026-04-12-0001"
+            },
+            "gatewayResponse": {
+              "transactionState": "AUTHORIZED",
+              "gatewayResponseCode": "00",
+              "gatewayResponseMessage": "Approved"
+            },
+            "paymentReceipt": {
+              "approvedAmount": {
+                "total": 50.00,
+                "currency": "USD"
+              }
+            },
+            "paymentMethod": {
+              "provider": "AFTERPAY"
+            }
+          }
+        }
+      }
+    },
+    "capture": {
+      "description": "Full capture of authorized Afterpay order.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders/ap_ord_98765432abcdef/capture",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "afterpay-test-capture-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {
+          "amount": {
+            "total": 50.00,
+            "currency": "USD"
+          }
+        }
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/v2/payments/ap_ord_98765432abcdef/capture",
+        "baseUrl": "https://global-api-sandbox.afterpay.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Basic {Base64(username:password)}"
+        },
+        "body": {
+          "amount": {
+            "amount": "50.00",
+            "currency": "USD"
+          }
+        }
+      },
+      "apmResponse": {
+        "httpStatus": 200,
+        "body": {
+          "id": "ap_ord_98765432abcdef",
+          "token": "ap_checkout_token_abcdef1234567890",
+          "status": "APPROVED",
+          "created": "2026-04-12T05:35:00Z",
+          "originalAmount": {
+            "amount": "50.00",
+            "currency": "USD"
+          },
+          "openToCaptureAmount": {
+            "amount": "0.00",
+            "currency": "USD"
+          },
+          "paymentState": "CAPTURED",
+          "merchantReference": "ORD-2026-04-12-0001",
+          "events": [
+            {
+              "type": "AUTH_APPROVED",
+              "created": "2026-04-12T05:35:00Z",
+              "amount": {
+                "amount": "50.00",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "CAPTURED",
+              "created": "2026-04-12T05:40:00Z",
+              "amount": {
+                "amount": "50.00",
+                "currency": "USD"
+              }
+            }
+          ]
+        }
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "ap_ord_98765432abcdef",
+            "orderId": "ORD-2026-04-12-0001"
+          },
+          "gatewayResponse": {
+            "transactionState": "CAPTURED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Capture successful"
+          },
+          "paymentReceipt": {
+            "approvedAmount": {
+              "total": 50.00,
+              "currency": "USD"
+            }
+          }
+        }
+      }
+    },
+    "refund": {
+      "description": "Partial refund of $20.00 for 1x Premium Widget from the captured order.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders/ap_ord_98765432abcdef/refund",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "afterpay-test-refund-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {
+          "amount": {
+            "total": 20.00,
+            "currency": "USD"
+          },
+          "referenceTransactionDetails": {
+            "referenceTransactionId": "afterpay-refund-idempotency-001"
+          },
+          "transactionDetails": {
+            "merchantOrderId": "ORD-2026-04-12-0001"
+          }
+        }
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/v2/payments/ap_ord_98765432abcdef/refund",
+        "baseUrl": "https://global-api-sandbox.afterpay.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Basic {Base64(username:password)}"
+        },
+        "body": {
+          "requestId": "afterpay-refund-idempotency-001",
+          "amount": {
+            "amount": "20.00",
+            "currency": "USD"
+          },
+          "merchantReference": "ORD-2026-04-12-0001"
+        }
+      },
+      "apmResponse": {
+        "httpStatus": 200,
+        "body": {
+          "refundId": "ap_ref_refund001abc",
+          "amount": {
+            "amount": "20.00",
+            "currency": "USD"
+          },
+          "refundedAt": "2026-04-12T06:00:00Z",
+          "requestId": "afterpay-refund-idempotency-001",
+          "merchantReference": "ORD-2026-04-12-0001"
+        }
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "ap_ord_98765432abcdef",
+            "orderId": "ORD-2026-04-12-0001"
+          },
+          "paymentReceipt": {
+            "processorResponseDetails": {
+              "referenceNumber": "ap_ref_refund001abc"
+            },
+            "refundedAmount": {
+              "total": 20.00,
+              "currency": "USD"
+            }
+          },
+          "gatewayResponse": {
+            "transactionState": "REFUNDED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Partial refund successful"
+          }
+        }
+      }
+    },
+    "void": {
+      "description": "Void an authorized but uncaptured Afterpay order. Empty request body -- only orderId in URL path.",
+      "chRequest": {
+        "method": "POST",
+        "path": "/checkouts/v1/orders/ap_ord_98765432abcdef/void",
+        "headers": {
+          "Content-Type": "application/json",
+          "Client-Request-Id": "afterpay-test-void-001",
+          "Auth-Token-Type": "HMAC",
+          "Authorization": "HMAC <computed>"
+        },
+        "body": {}
+      },
+      "apmRequest": {
+        "method": "POST",
+        "path": "/v2/payments/ap_ord_98765432abcdef/void",
+        "baseUrl": "https://global-api-sandbox.afterpay.com",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Basic {Base64(username:password)}"
+        },
+        "body": {}
+      },
+      "apmResponse": {
+        "httpStatus": 200,
+        "body": {
+          "id": "ap_ord_98765432abcdef",
+          "token": "ap_checkout_token_abcdef1234567890",
+          "status": "APPROVED",
+          "paymentState": "VOIDED",
+          "originalAmount": {
+            "amount": "50.00",
+            "currency": "USD"
+          },
+          "openToCaptureAmount": {
+            "amount": "0.00",
+            "currency": "USD"
+          },
+          "merchantReference": "ORD-2026-04-12-0001"
+        }
+      },
+      "chResponse": {
+        "httpStatus": 200,
+        "body": {
+          "transactionProcessingDetails": {
+            "transactionId": "ap_ord_98765432abcdef",
+            "orderId": "ORD-2026-04-12-0001"
+          },
+          "gatewayResponse": {
+            "transactionState": "VOIDED",
+            "gatewayResponseCode": "00",
+            "gatewayResponseMessage": "Order voided"
+          }
+        }
+      }
+    }
+  },
+  "validationChecks": {
+    "amountSymmetry": {
+      "authAmount": 50.00,
+      "captureAmount": 50.00,
+      "refundAmount": 20.00,
+      "netAmount": 30.00,
+      "status": "PASS"
+    },
+    "stringDecimalConversion": {
+      "decimal_50_00": "50.00",
+      "decimal_20_00": "20.00",
+      "decimal_10_00": "10.00",
+      "note": "NUMBER_TO_STRING: 50.00 (number) -> \"50.00\" (string). STRING_TO_NUMBER: \"50.00\" (string) -> 50.00 (number). No multiplication/division needed.",
+      "status": "PASS"
+    },
+    "lineItemIntegrity": {
+      "item1": "Premium Widget: 2 x $20.00 = $40.00",
+      "item2": "Shipping: 1 x $10.00 = $10.00",
+      "orderTotal": "$40.00 + $10.00 = $50.00",
+      "status": "PASS"
+    },
+    "currencyPreservation": {
+      "inputCurrency": "USD",
+      "chCurrency": "USD",
+      "apmCurrency": "USD",
+      "status": "PASS"
+    },
+    "idTraceability": {
+      "merchantOrderId": "ORD-2026-04-12-0001",
+      "afterpayCheckoutToken": "ap_checkout_token_abcdef1234567890",
+      "afterpayOrderId": "ap_ord_98765432abcdef",
+      "afterpayRefundId": "ap_ref_refund001abc",
+      "status": "PASS"
+    },
+    "returnUrlMapping": {
+      "successUrl": "https://merchant.example.com/afterpay/confirm -> merchant.redirectConfirmUrl",
+      "cancelUrl": "https://merchant.example.com/afterpay/cancel -> merchant.redirectCancelUrl",
+      "status": "PASS"
+    }
+  }
+}

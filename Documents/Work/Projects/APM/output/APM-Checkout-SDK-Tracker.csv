@@ -1,0 +1,54 @@
+APM Code,APM Name,Region,Pattern,Status,Sprint,Sandbox Type,Sandbox Validated,Callbacks (Pass/Total),Promo Widget,Test Data Reference,Notes
+IDEAL,iDEAL,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,Bank selection dropdown
+BANCONTACT,Bancontact,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,
+EPS,EPS,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,Bank selection dropdown
+BLIK,BLIK,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox; auth codes starting with 777,6-digit code input
+MULTIBANCO,Multibanco,Europe,voucher-cash,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,72h expiry
+MBWAY,MB WAY,Europe,redirect-wallet,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,Phone input required
+TRUSTLY,Trustly,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+WERO,Wero,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,
+SOFORT,Sofort,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+GIROPAY,Giropay,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,Sunset - migrating to Wero
+PRZELEWY24,Przelewy24,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,Bank selection dropdown
+SWISH,Swish,Europe,redirect-wallet,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,Dual-mode: QR desktop / redirect mobile
+VIPPS,Vipps,Europe,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+MOBILEPAY,MobilePay,Europe,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,Merged with Vipps
+POSTFINANCE,PostFinance,Europe,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+TWINT,TWINT,Europe,qr-code,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,QR scan
+PIX,Pix,LATAM,qr-code,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,QR code with scanBy expiry
+BOLETO,Boleto,LATAM,voucher-cash,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,7-day expiry
+OXXO,OXXO,LATAM,voucher-cash,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,72h expiry with barcode
+SPEI,SPEI,LATAM,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+PSE,PSE,LATAM,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,Bank selection
+EFECTY,Efecty,LATAM,voucher-cash,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,48h expiry
+MERCADOPAGO,Mercado Pago,LATAM,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+RAPIPAGO,RapiPago,LATAM,voucher-cash,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,72h expiry
+PAGOEFECTIVO,PagoEfectivo,LATAM,voucher-cash,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,48h expiry
+WEBPAY,Webpay,LATAM,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+ALIPAYPLUS,Alipay+,APAC,qr-code,Framework Ready,,Mock,Yes,5/5,N/A,Mock - RSA256 auth,9 APAC markets
+ALIPAY,Alipay,APAC,qr-code,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,Dual-mode
+WECHATPAY,WeChat Pay,APAC,qr-code,Framework Ready,,Mock,Yes,5/5,N/A,Mock - HMAC-SHA256,QR code URL string
+GRABPAY,GrabPay,APAC,redirect-wallet,Framework Ready,,Mock,Yes,4/5,N/A,Mock - HMAC-SHA256,8 SEA markets
+PAYNOW,PayNow,APAC,bank-redirect,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+GCASH,GCash,APAC,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+MAYA,Maya,APAC,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+LINEPAY,LINE Pay,APAC,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+KAKAOPAY,KakaoPay,APAC,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+DANA,DANA,APAC,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+OVO,OVO,APAC,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+SHOPEEPAY,ShopeePay,APAC,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+TOUCHNGO,Touch 'n Go,APAC,redirect-wallet,Framework Ready,,PPRO Live,Yes,4/5,N/A,PPRO sandbox,
+PAYPAY,PayPay,APAC,qr-code,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,Dual-mode
+UPI,UPI,APAC,qr-code,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,Multi-app ecosystem
+KONBINI,Konbini,APAC,voucher-cash,Framework Ready,,PPRO Live,Yes,5/5,N/A,PPRO sandbox,3-day expiry with store selection
+PAYPAL,PayPal,Global,redirect-wallet,Framework Ready,,Mock,Yes,7/7,Real SDK (Pay Later),PayPal sandbox client-id=sb,Shipping callbacks supported
+KLARNA,Klarna,Global,server-bnpl,Framework Ready,,Live Sandbox,Yes,7/7,Real SDK (OSM TESTDRIVE),customer+us@klarna.com approve / customer+us+denied@klarna.com decline,Real widget + OSM
+AFTERPAY,Afterpay,Global,server-bnpl,Framework Ready,,Mock,Yes,6/6,Simulated (needs MPID),Visa 4111111111111111 CVV 000=approve 051=decline,
+AFFIRM,Affirm,Global,server-bnpl,Framework Ready,,Mock,Yes,5/5,Simulated (needs API key),Verification 123456=approve 1234=decline,
+CASHAPP,Cash App,Global,redirect-wallet,Framework Ready,,Live Sandbox,Yes,6/6,N/A,Magic amounts: 7771=insufficient 7772=decline,Real QR code from sandbox
+VENMO,Venmo,Global,redirect-wallet,Framework Ready,,Mock,Yes,5/5,N/A,fake-venmo-account-nonce,Via Braintree SDK
+APPLEPAY,Apple Pay,Global,native-wallet,Framework Ready,,Live Sandbox,Yes,9/9,N/A,Test cards: Visa 4761120010000492,merchant.app.vercel.hottopic
+GOOGLEPAY,Google Pay,Global,native-wallet,Framework Ready,,TEST Mode,Yes,7/7,N/A,TEST environment - constant test token,Shipping callbacks in TEST mode
+SEZZLE,Sezzle,Global,server-bnpl,Framework Ready,,Mock,Yes,4/4,Real SDK (static widget),Mock server,Static widget no UUID needed
+ZIP,Zip,Global,server-bnpl,Framework Ready,,Mock,Yes,4/4,Simulated (needs merchant ID),Mock server,
+TABAPAY,TabaPay,Global,redirect-wallet,Framework Ready,,Mock,Yes,4/5,N/A,Mock server,

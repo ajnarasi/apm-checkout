@@ -1,0 +1,576 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "PPRO v1",
+    "aggregator": "PPRO",
+    "targetApm": "IDEAL",
+    "ucomVersion": "0.2.3",
+    "snappayVersion": "3.0.9",
+    "generatedAt": "2026-04-12T07:02:00Z",
+    "patternTemplate": "bank-redirect-v1",
+    "goldenMappingSource": "NONE -- generated from sandbox discovery",
+    "confidence": "generated",
+    "safetyChecksPassed": true,
+    "sandboxValidated": true,
+    "sandboxUrl": "https://api.sandbox.eu.ppro.com"
+  },
+  "apm": "ideal",
+  "apmDisplayName": "iDEAL",
+  "aggregator": "PPRO",
+  "pattern": "bank-redirect",
+  "capabilities": ["auth", "capture", "refund", "void", "partial-refund", "cancel"],
+  "regions": ["NL"],
+  "currencies": ["EUR"],
+  "channel": "web",
+  "sandbox": {
+    "baseUrl": "https://api.sandbox.eu.ppro.com",
+    "authScheme": "Bearer token + Merchant-Id header",
+    "testChargeId": "charge_oc43q4PDbViOlkzoweDXQ"
+  },
+  "mappings": {
+    "auth": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "amount.value",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Total amount in minor units (10.00 -> 1000)",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "amount.currency",
+          "chType": "string",
+          "apmFieldPath": "amount.currency",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "ISO 4217 currency code (EUR for iDEAL)",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "customer.firstName",
+          "chType": "string",
+          "apmFieldPath": "consumer.name",
+          "apmType": "string",
+          "transform": "CONCAT",
+          "transformDetail": "customer.firstName + ' ' + customer.lastName",
+          "tier": 1,
+          "required": true,
+          "description": "Consumer full name (concatenated from first + last)",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "customer.email",
+          "chType": "string",
+          "apmFieldPath": "consumer.email",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Consumer email address",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "customerAddress.country",
+          "chType": "string",
+          "apmFieldPath": "consumer.country",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "ISO 3166-1 alpha-2 country code (NL for iDEAL)",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "paymentMethod.provider",
+          "chType": "string",
+          "apmFieldPath": "paymentMethod",
+          "apmType": "string",
+          "transform": "MAP_ENUM_UPPER",
+          "transformMap": {
+            "IDEAL": "IDEAL",
+            "ideal": "IDEAL"
+          },
+          "tier": 1,
+          "required": true,
+          "description": "Payment method identifier (must be uppercase IDEAL)",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "transactionDetails.captureFlag",
+          "chType": "boolean",
+          "apmFieldPath": "autoCapture",
+          "apmType": "boolean",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": false,
+          "description": "true for immediate capture, false for auth-only",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "checkoutInteractions.returnUrls.successUrl",
+          "chType": "string",
+          "apmFieldPath": "authenticationSettings[0].settings.returnUrl",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Customer redirect URL after bank authentication",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "checkoutInteractions.actions.type",
+          "chType": "string",
+          "apmFieldPath": "authenticationSettings[0].type",
+          "apmType": "string",
+          "transform": "MAP_ENUM",
+          "transformMap": {
+            "WEB_REDIRECTION": "REDIRECT"
+          },
+          "tier": 1,
+          "required": true,
+          "description": "Authentication type (redirect for iDEAL)",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "chType": "string",
+          "apmFieldPath": "merchantPaymentChargeReference",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": false,
+          "description": "Merchant order reference",
+          "confidence": "generated"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "id",
+          "apmType": "string",
+          "chFieldPath": "transactionProcessingDetails.transactionId",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "PPRO charge identifier (e.g., charge_oc43q4PDbViOlkzoweDXQ)",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "status",
+          "apmType": "string",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "transform": "MAP_ENUM",
+          "transformMap": {
+            "AUTHENTICATION_PENDING": "PAYER_ACTION_REQUIRED",
+            "AUTHORIZED": "AUTHORIZED",
+            "CAPTURED": "CAPTURED",
+            "REFUNDED": "REFUNDED",
+            "VOIDED": "VOIDED",
+            "AUTHENTICATION_FAILED": "DECLINED"
+          },
+          "tier": 1,
+          "description": "Transaction status mapped to CH state",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "instrumentId",
+          "apmType": "string",
+          "chFieldPath": "paymentMethod.paymentToken.tokenData",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "description": "PPRO payment instrument identifier",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "authenticationMethods[0].details.requestUrl",
+          "apmType": "string",
+          "chFieldPath": "checkoutInteractions.actions.url",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Bank redirect URL for customer authentication",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "authenticationMethods[0].type",
+          "apmType": "string",
+          "chFieldPath": "checkoutInteractions.actions.type",
+          "chType": "string",
+          "transform": "MAP_ENUM",
+          "transformMap": {
+            "REDIRECT": "WEB_REDIRECTION",
+            "SCAN_CODE": "QR_CODE"
+          },
+          "tier": 1,
+          "description": "Authentication method type",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "authorizations[0].id",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.processorResponseDetails.referenceNumber",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "PPRO authorization reference ID",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "authorizations[0].amount",
+          "apmType": "integer",
+          "chFieldPath": "paymentReceipt.approvedAmount.total",
+          "chType": "number",
+          "transform": "DIVIDE_100",
+          "tier": 1,
+          "description": "Authorized amount converted back to decimal (1000 -> 10.00)",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "currency",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.approvedAmount.currency",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Currency code (EUR)",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "merchantPaymentChargeReference",
+          "apmType": "string",
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Echoed merchant order reference",
+          "confidence": "generated"
+        }
+      ]
+    },
+    "capture": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "amount.value",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Capture amount in minor units",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "referenceTransactionDetails.referenceTransactionId",
+          "chType": "string",
+          "apmFieldPath": "{chargeId} in URL path",
+          "apmType": "string",
+          "transform": "PATH_PARAM",
+          "tier": 1,
+          "required": true,
+          "description": "PPRO charge ID used as URL path parameter",
+          "confidence": "generated"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "captures[0].id",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.processorResponseDetails.referenceNumber",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "PPRO capture identifier",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "captures[0].amount",
+          "apmType": "integer",
+          "chFieldPath": "paymentReceipt.approvedAmount.total",
+          "chType": "number",
+          "transform": "DIVIDE_100",
+          "tier": 1,
+          "description": "Captured amount in decimal",
+          "confidence": "generated"
+        },
+        {
+          "value": "CAPTURED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "description": "Transaction state set to CAPTURED on success",
+          "confidence": "generated"
+        }
+      ]
+    },
+    "refund": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "amount.value",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Refund amount in minor units (partial OK)",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "referenceTransactionDetails.referenceTransactionId",
+          "chType": "string",
+          "apmFieldPath": "{chargeId} in URL path",
+          "apmType": "string",
+          "transform": "PATH_PARAM",
+          "tier": 1,
+          "required": true,
+          "description": "PPRO charge ID used as URL path parameter",
+          "confidence": "generated"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "refunds[0].id",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.processorResponseDetails.referenceNumber",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "PPRO refund identifier",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "refunds[0].amount",
+          "apmType": "integer",
+          "chFieldPath": "paymentReceipt.refundedAmount.total",
+          "chType": "number",
+          "transform": "DIVIDE_100",
+          "tier": 1,
+          "description": "Refunded amount in decimal",
+          "confidence": "generated"
+        },
+        {
+          "value": "REFUNDED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "description": "Transaction state set to REFUNDED on success",
+          "confidence": "generated"
+        }
+      ]
+    },
+    "void": {
+      "request": [
+        {
+          "chFieldPath": "referenceTransactionDetails.referenceTransactionId",
+          "chType": "string",
+          "apmFieldPath": "{chargeId} in URL path",
+          "apmType": "string",
+          "transform": "PATH_PARAM",
+          "tier": 1,
+          "required": true,
+          "description": "PPRO charge ID used as URL path parameter",
+          "confidence": "generated"
+        }
+      ],
+      "response": [
+        {
+          "value": "VOIDED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "description": "Transaction state set to VOIDED on successful void",
+          "confidence": "generated"
+        }
+      ]
+    },
+    "partial-refund": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "amount.value",
+          "apmType": "integer",
+          "transform": "MULTIPLY_100",
+          "tier": 1,
+          "required": true,
+          "description": "Partial refund amount in minor units (less than captured amount)",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "amount.currency",
+          "chType": "string",
+          "apmFieldPath": "amount.currency",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "description": "Must match original currency",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "referenceTransactionDetails.referenceTransactionId",
+          "chType": "string",
+          "apmFieldPath": "{chargeId} in URL path",
+          "apmType": "string",
+          "transform": "PATH_PARAM",
+          "tier": 1,
+          "required": true,
+          "description": "Original charge ID",
+          "confidence": "generated"
+        },
+        {
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "chType": "string",
+          "apmFieldPath": "merchantPaymentChargeReference",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "description": "Refund reference",
+          "confidence": "generated"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "refundId",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.processorResponseDetails.referenceNumber",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "PPRO refund ID",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "amount.value",
+          "apmType": "integer",
+          "chFieldPath": "paymentReceipt.approvedAmount.total",
+          "chType": "number",
+          "transform": "DIVIDE_100",
+          "tier": 1,
+          "description": "Partial refund amount in decimal",
+          "confidence": "generated"
+        },
+        {
+          "apmFieldPath": "amount.currency",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.approvedAmount.currency",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "description": "Currency code",
+          "confidence": "generated"
+        },
+        {
+          "value": "REFUNDED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "description": "Transaction state set to REFUNDED on success",
+          "confidence": "generated"
+        }
+      ],
+      "note": "Uses same PPRO endpoint as full refund (POST /v1/payment-charges/{chargeId}/refunds). Amount is less than captured total. Multiple partial refunds allowed."
+    },
+    "cancel": {
+      "request": [
+        {
+          "chFieldPath": "referenceTransactionDetails.referenceTransactionId",
+          "chType": "string",
+          "apmFieldPath": "{chargeId} in URL path",
+          "apmType": "string",
+          "transform": "PATH_PARAM",
+          "tier": 1,
+          "required": true,
+          "description": "PPRO charge ID used as URL path parameter",
+          "confidence": "generated"
+        }
+      ],
+      "response": [
+        {
+          "value": "VOIDED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "description": "Transaction state set to VOIDED on successful cancel",
+          "confidence": "generated"
+        }
+      ],
+      "note": "Cancel and void use the same PPRO endpoint (POST /v1/payment-charges/{chargeId}/voids). Cancel applies to authorized-but-uncaptured payments."
+    }
+  },
+  "authScheme": {
+    "type": "BEARER_TOKEN",
+    "headerFormat": "Authorization: Bearer {token}",
+    "additionalHeaders": {
+      "Merchant-Id": "{merchant_id}"
+    },
+    "credentialSource": "vault",
+    "rotationPolicy": "90_DAYS"
+  },
+  "lifecycle": {
+    "states": [
+      "AUTHENTICATION_PENDING",
+      "AUTHORIZED",
+      "CAPTURED",
+      "PARTIALLY_CAPTURED",
+      "REFUNDED",
+      "PARTIALLY_REFUNDED",
+      "VOIDED",
+      "AUTHENTICATION_FAILED"
+    ],
+    "transitions": {
+      "AUTHENTICATION_PENDING": ["AUTHORIZED", "AUTHENTICATION_FAILED"],
+      "AUTHORIZED": ["CAPTURED", "PARTIALLY_CAPTURED", "VOIDED"],
+      "PARTIALLY_CAPTURED": ["CAPTURED", "REFUNDED", "PARTIALLY_REFUNDED"],
+      "CAPTURED": ["REFUNDED", "PARTIALLY_REFUNDED"],
+      "PARTIALLY_REFUNDED": ["REFUNDED"]
+    },
+    "terminalStates": ["REFUNDED", "VOIDED", "AUTHENTICATION_FAILED"],
+    "expirationWindow": "15_TO_30_MINUTES"
+  },
+  "safetyChecks": {
+    "amountSymmetry": "PASS",
+    "currencyPreservation": "PASS",
+    "idUniqueness": "PASS",
+    "tier1Coverage": "PASS",
+    "bidirectionalCompleteness": "PASS",
+    "returnUrlValidation": "PASS"
+  },
+  "errorMapping": {
+    "INVALID_REQUEST": { "chCode": "VALIDATION_ERROR", "httpStatus": 400 },
+    "NOT_FOUND": { "chCode": "RESOURCE_NOT_FOUND", "httpStatus": 404 },
+    "UNAUTHORIZED": { "chCode": "AUTHORIZATION_FAILED", "httpStatus": 401 },
+    "FORBIDDEN": { "chCode": "AUTHORIZATION_FAILED", "httpStatus": 403 },
+    "INVALID_STATE": { "chCode": "INVALID_OPERATION", "httpStatus": 409 },
+    "AMOUNT_EXCEEDED": { "chCode": "AMOUNT_MISMATCH", "httpStatus": 400 },
+    "CAPTURE_FAILED": { "chCode": "CAPTURE_FAILED", "httpStatus": 409 },
+    "REFUND_FAILED": { "chCode": "REFUND_FAILED", "httpStatus": 409 },
+    "VOID_FAILED": { "chCode": "CANCEL_FAILED", "httpStatus": 409 },
+    "PROVIDER_ERROR": { "chCode": "PROVIDER_ERROR", "httpStatus": 502 }
+  },
+  "unmappableFields": {
+    "ppro": [
+      "paymentMedium",
+      "scheduleType",
+      "instrumentId (different semantics)",
+      "_links (HATEOAS)",
+      "authenticationMethods[].details.requestMethod"
+    ],
+    "commerceHub": [
+      "merchantDetails.storeId",
+      "merchantDetails.terminalId",
+      "encryptionData",
+      "splitShipment",
+      "dynamicDescriptors.mcc"
+    ]
+  }
+}

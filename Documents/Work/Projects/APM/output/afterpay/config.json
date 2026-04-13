@@ -1,0 +1,700 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "v2",
+    "ucomVersion": "0.2.3",
+    "snappayVersion": "3.0.9",
+    "generatedAt": "2026-04-12T05:30:00Z",
+    "patternTemplate": "server-bnpl-v1",
+    "goldenMappingSource": "NONE -- generated from BNPL template + provider API docs",
+    "safetyChecksPassed": true,
+    "confidence": "generated"
+  },
+  "apm": "afterpay",
+  "apmDisplayName": "Afterpay",
+  "pattern": "server-bnpl-redirect",
+  "capabilities": ["auth", "capture", "refund", "void"],
+  "regions": ["US", "AU"],
+  "channel": "web",
+  "sandbox": {
+    "baseUrl": "https://global-api-sandbox.afterpay.com",
+    "merchant": "SANDBOX_MERCHANT"
+  },
+  "regionalEndpoints": {
+    "US": "https://global-api-sandbox.afterpay.com",
+    "AU": "https://global-api-sandbox.afterpay.com"
+  },
+  "bnplPromotedFields": [
+    "orderData.itemDetails[]",
+    "shippingAddress",
+    "billingAddress",
+    "customer.email",
+    "customer.firstName",
+    "customer.lastName",
+    "checkoutInteractions.returnUrls"
+  ],
+  "templateDifferences": {
+    "amountFormat": "Afterpay uses string decimal (\"50.00\"), Klarna uses integer minor units (5000). Transform is NUMBER_TO_STRING/STRING_TO_NUMBER, not MULTIPLY_100/DIVIDE_100.",
+    "checkoutFlow": "Afterpay redirects customer to redirectCheckoutUrl. Klarna uses embedded JS SDK widget.",
+    "addressFields": "Afterpay uses line1/area1/region/postcode/countryCode. Klarna uses street_address/city/postal_code/country.",
+    "lineItemPrice": "Afterpay items[].price is Money object {amount, currency}. Klarna order_lines[].unit_price is integer."
+  },
+  "mappings": {
+    "auth": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "amount.amount",
+          "apmType": "string",
+          "transform": "NUMBER_TO_STRING",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Total order amount as string decimal"
+        },
+        {
+          "chFieldPath": "amount.currency",
+          "chType": "string",
+          "apmFieldPath": "amount.currency",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "ISO 4217 currency code"
+        },
+        {
+          "chFieldPath": "customer.firstName",
+          "chType": "string",
+          "apmFieldPath": "consumer.givenNames",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Consumer first name"
+        },
+        {
+          "chFieldPath": "customer.lastName",
+          "chType": "string",
+          "apmFieldPath": "consumer.surname",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Consumer last name"
+        },
+        {
+          "chFieldPath": "customer.email",
+          "chType": "string",
+          "apmFieldPath": "consumer.email",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Consumer email -- primary identity for Afterpay"
+        },
+        {
+          "chFieldPath": "customer.phone[0].phoneNumber",
+          "chType": "string",
+          "apmFieldPath": "consumer.phoneNumber",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "confidence": "generated",
+          "description": "Consumer phone number"
+        },
+        {
+          "chFieldPath": "shippingAddress.firstName + shippingAddress.lastName",
+          "chType": "string",
+          "apmFieldPath": "shipping.name",
+          "apmType": "string",
+          "transform": "CONCAT",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Shipping contact full name"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.street",
+          "chType": "string",
+          "apmFieldPath": "shipping.line1",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Shipping address line 1"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.houseNumberOrName",
+          "chType": "string",
+          "apmFieldPath": "shipping.line2",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "confidence": "generated",
+          "description": "Shipping address line 2"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.city",
+          "chType": "string",
+          "apmFieldPath": "shipping.area1",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Shipping city/suburb"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.stateOrProvince",
+          "chType": "string",
+          "apmFieldPath": "shipping.region",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Shipping state/province"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.postalCode",
+          "chType": "string",
+          "apmFieldPath": "shipping.postcode",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Shipping postal code"
+        },
+        {
+          "chFieldPath": "shippingAddress.address.country",
+          "chType": "string",
+          "apmFieldPath": "shipping.countryCode",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Shipping country (ISO 3166-1 alpha-2)"
+        },
+        {
+          "chFieldPath": "billingAddress.firstName + billingAddress.lastName",
+          "chType": "string",
+          "apmFieldPath": "billing.name",
+          "apmType": "string",
+          "transform": "CONCAT",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Billing contact full name"
+        },
+        {
+          "chFieldPath": "billingAddress.address.street",
+          "chType": "string",
+          "apmFieldPath": "billing.line1",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Billing address line 1"
+        },
+        {
+          "chFieldPath": "billingAddress.address.houseNumberOrName",
+          "chType": "string",
+          "apmFieldPath": "billing.line2",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "confidence": "generated",
+          "description": "Billing address line 2"
+        },
+        {
+          "chFieldPath": "billingAddress.address.city",
+          "chType": "string",
+          "apmFieldPath": "billing.area1",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Billing city/suburb"
+        },
+        {
+          "chFieldPath": "billingAddress.address.stateOrProvince",
+          "chType": "string",
+          "apmFieldPath": "billing.region",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Billing state/province"
+        },
+        {
+          "chFieldPath": "billingAddress.address.postalCode",
+          "chType": "string",
+          "apmFieldPath": "billing.postcode",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Billing postal code"
+        },
+        {
+          "chFieldPath": "billingAddress.address.country",
+          "chType": "string",
+          "apmFieldPath": "billing.countryCode",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Billing country (ISO 3166-1 alpha-2)"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].itemName",
+          "chType": "string",
+          "apmFieldPath": "items[].name",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Line item name"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].quantity",
+          "chType": "integer",
+          "apmFieldPath": "items[].quantity",
+          "apmType": "integer",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Line item quantity"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].amountComponents.unitPrice",
+          "chType": "number",
+          "apmFieldPath": "items[].price.amount",
+          "apmType": "string",
+          "transform": "NUMBER_TO_STRING",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Unit price as string decimal in Money object"
+        },
+        {
+          "chFieldPath": "amount.currency",
+          "chType": "string",
+          "apmFieldPath": "items[].price.currency",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Item price currency (inherited from order)"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].productSKU",
+          "chType": "string",
+          "apmFieldPath": "items[].sku",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "confidence": "generated",
+          "description": "Item SKU (max 128 chars)"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].itemUrl",
+          "chType": "string",
+          "apmFieldPath": "items[].pageUrl",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "confidence": "generated",
+          "description": "Product page URL"
+        },
+        {
+          "chFieldPath": "orderData.itemDetails[].itemImageUrl",
+          "chType": "string",
+          "apmFieldPath": "items[].imageUrl",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "confidence": "generated",
+          "description": "Product image URL"
+        },
+        {
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "chType": "string",
+          "apmFieldPath": "merchantReference",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Merchant order reference"
+        },
+        {
+          "chFieldPath": "checkoutInteractions.returnUrls.successUrl",
+          "chType": "string",
+          "apmFieldPath": "merchant.redirectConfirmUrl",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Customer return URL on approval"
+        },
+        {
+          "chFieldPath": "checkoutInteractions.returnUrls.cancelUrl",
+          "chType": "string",
+          "apmFieldPath": "merchant.redirectCancelUrl",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Customer return URL on cancellation"
+        },
+        {
+          "chFieldPath": "paymentMethod.provider",
+          "chType": "string",
+          "apmFieldPath": null,
+          "apmType": null,
+          "transform": "SET_VALUE",
+          "transformValue": "AFTERPAY",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Payment provider identifier"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "token",
+          "apmType": "string",
+          "chFieldPath": "paymentMethod.paymentToken.tokenData",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Afterpay checkout token for auth/capture"
+        },
+        {
+          "apmFieldPath": "redirectCheckoutUrl",
+          "apmType": "string",
+          "chFieldPath": "checkoutInteractions.actions.url",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "URL to redirect customer to Afterpay"
+        },
+        {
+          "apmFieldPath": "id",
+          "apmType": "string",
+          "chFieldPath": "transactionProcessingDetails.transactionId",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Afterpay Order ID (after auth/capture)"
+        },
+        {
+          "apmFieldPath": "status",
+          "apmType": "string",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "transform": "MAP_ENUM",
+          "transformMap": {
+            "APPROVED": "AUTHORIZED",
+            "DECLINED": "DECLINED"
+          },
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Payment status mapped to transaction state"
+        },
+        {
+          "apmFieldPath": "paymentState",
+          "apmType": "string",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "transform": "MAP_ENUM",
+          "transformMap": {
+            "AUTH_APPROVED": "AUTHORIZED",
+            "PARTIALLY_CAPTURED": "PARTIALLY_CAPTURED",
+            "CAPTURED": "CAPTURED",
+            "VOIDED": "VOIDED"
+          },
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Detailed payment state mapped to transaction state"
+        },
+        {
+          "apmFieldPath": "originalAmount.amount",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.approvedAmount.total",
+          "chType": "number",
+          "transform": "STRING_TO_NUMBER",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Authorized amount converted from string to number"
+        },
+        {
+          "apmFieldPath": "originalAmount.currency",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.approvedAmount.currency",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Currency code passthrough"
+        },
+        {
+          "apmFieldPath": "merchantReference",
+          "apmType": "string",
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Merchant order reference passthrough"
+        }
+      ]
+    },
+    "capture": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "amount.amount",
+          "apmType": "string",
+          "transform": "NUMBER_TO_STRING",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Capture amount as string decimal"
+        },
+        {
+          "chFieldPath": "amount.currency",
+          "chType": "string",
+          "apmFieldPath": "amount.currency",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Capture currency"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "id",
+          "apmType": "string",
+          "chFieldPath": "transactionProcessingDetails.transactionId",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Afterpay Order ID"
+        },
+        {
+          "apmFieldPath": "originalAmount.amount",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.approvedAmount.total",
+          "chType": "number",
+          "transform": "STRING_TO_NUMBER",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Original amount in decimal"
+        },
+        {
+          "apmFieldPath": "originalAmount.currency",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.approvedAmount.currency",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Currency passthrough"
+        },
+        {
+          "apmFieldPath": "paymentState",
+          "apmType": "string",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "transform": "MAP_ENUM",
+          "transformMap": {
+            "CAPTURED": "CAPTURED",
+            "PARTIALLY_CAPTURED": "PARTIALLY_CAPTURED"
+          },
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Capture state mapping"
+        }
+      ]
+    },
+    "refund": {
+      "request": [
+        {
+          "chFieldPath": "amount.total",
+          "chType": "number",
+          "apmFieldPath": "amount.amount",
+          "apmType": "string",
+          "transform": "NUMBER_TO_STRING",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Refund amount as string decimal"
+        },
+        {
+          "chFieldPath": "amount.currency",
+          "chType": "string",
+          "apmFieldPath": "amount.currency",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Refund currency"
+        },
+        {
+          "chFieldPath": "referenceTransactionDetails.referenceTransactionId",
+          "chType": "string",
+          "apmFieldPath": "requestId",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "required": true,
+          "confidence": "generated",
+          "description": "Idempotency key (max 64 chars)"
+        },
+        {
+          "chFieldPath": "transactionDetails.merchantOrderId",
+          "chType": "string",
+          "apmFieldPath": "merchantReference",
+          "apmType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 2,
+          "required": false,
+          "confidence": "generated",
+          "description": "Merchant reference (max 85 chars)"
+        }
+      ],
+      "response": [
+        {
+          "apmFieldPath": "refundId",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.processorResponseDetails.referenceNumber",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Afterpay refund identifier"
+        },
+        {
+          "apmFieldPath": "amount.amount",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.refundedAmount.total",
+          "chType": "number",
+          "transform": "STRING_TO_NUMBER",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Refunded amount in decimal"
+        },
+        {
+          "apmFieldPath": "amount.currency",
+          "apmType": "string",
+          "chFieldPath": "paymentReceipt.refundedAmount.currency",
+          "chType": "string",
+          "transform": "PASSTHROUGH",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Refund currency passthrough"
+        },
+        {
+          "value": "REFUNDED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Transaction state set to REFUNDED on success"
+        }
+      ]
+    },
+    "void": {
+      "request": [],
+      "response": [
+        {
+          "value": "VOIDED",
+          "chFieldPath": "gatewayResponse.transactionState",
+          "chType": "string",
+          "tier": 1,
+          "confidence": "generated",
+          "description": "Transaction state set to VOIDED on successful void"
+        }
+      ]
+    }
+  },
+  "authScheme": {
+    "type": "HTTP_BASIC",
+    "headerFormat": "Authorization: Basic {Base64(username:password)}",
+    "credentialSource": "vault",
+    "rotationPolicy": "90_DAYS"
+  },
+  "lifecycle": {
+    "states": [
+      "CHECKOUT_CREATED",
+      "AUTHORIZED",
+      "PARTIALLY_CAPTURED",
+      "CAPTURED",
+      "REFUNDED",
+      "VOIDED",
+      "EXPIRED"
+    ],
+    "transitions": {
+      "CHECKOUT_CREATED": ["AUTHORIZED", "CAPTURED", "EXPIRED"],
+      "AUTHORIZED": ["CAPTURED", "PARTIALLY_CAPTURED", "VOIDED"],
+      "PARTIALLY_CAPTURED": ["CAPTURED", "REFUNDED"],
+      "CAPTURED": ["REFUNDED"]
+    },
+    "terminalStates": ["REFUNDED", "VOIDED", "EXPIRED"],
+    "expirationWindow": "SESSION_BASED"
+  },
+  "safetyChecks": {
+    "amountSymmetry": "PASS",
+    "currencyPreservation": "PASS",
+    "idUniqueness": "PASS",
+    "tier1Coverage": "PASS",
+    "bidirectionalCompleteness": "PASS",
+    "returnUrlValidation": "PASS",
+    "stringDecimalConsistency": "PASS"
+  },
+  "errorMapping": {
+    "INVALID_OBJECT": { "chCode": "VALIDATION_ERROR", "httpStatus": 400 },
+    "INVALID_TOKEN": { "chCode": "VALIDATION_ERROR", "httpStatus": 400 },
+    "NOT_FOUND": { "chCode": "RESOURCE_NOT_FOUND", "httpStatus": 404 },
+    "UNAUTHORIZED": { "chCode": "AUTHORIZATION_FAILED", "httpStatus": 401 },
+    "DECLINED": { "chCode": "PAYMENT_DECLINED", "httpStatus": 403 },
+    "CAPTURE_NOT_ALLOWED": { "chCode": "CAPTURE_FAILED", "httpStatus": 409 },
+    "REFUND_NOT_ALLOWED": { "chCode": "REFUND_FAILED", "httpStatus": 409 },
+    "VOID_NOT_ALLOWED": { "chCode": "CANCEL_FAILED", "httpStatus": 409 },
+    "SERVER_ERROR": { "chCode": "PROVIDER_ERROR", "httpStatus": 502 }
+  }
+}

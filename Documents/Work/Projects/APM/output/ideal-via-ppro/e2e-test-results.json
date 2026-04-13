@@ -1,0 +1,156 @@
+{
+  "total": 24,
+  "passed": 24,
+  "failed": 0,
+  "chargeIds": {
+    "ideal": "charge_wnOEq96O6KLwP1DdmQaHL",
+    "bancontact": "charge_OEgsAFZ8WJES1q6bvTG4n",
+    "pix": "charge_B5Tvs4DHQdT6SlwkoMZUI"
+  },
+  "results": [
+    {
+      "id": "T1.1",
+      "name": "PPRO accepted request",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "id": "T1.2",
+      "name": "Amount transform MULTIPLY_100",
+      "passed": true,
+      "detail": "15.50 \u2192 1550"
+    },
+    {
+      "id": "T1.3",
+      "name": "Currency PASSTHROUGH",
+      "passed": true,
+      "detail": "EUR"
+    },
+    {
+      "id": "T1.4",
+      "name": "Country PASSTHROUGH",
+      "passed": true,
+      "detail": "NL"
+    },
+    {
+      "id": "T1.5",
+      "name": "PaymentMethod UPPERCASE",
+      "passed": true,
+      "detail": "IDEAL"
+    },
+    {
+      "id": "T1.6",
+      "name": "Charge ID returned (charge_*)",
+      "passed": true,
+      "detail": "charge_wnOEq96O6KLwP1DdmQaHL"
+    },
+    {
+      "id": "T1.7",
+      "name": "Status = AUTHENTICATION_PENDING",
+      "passed": true,
+      "detail": "AUTHENTICATION_PENDING"
+    },
+    {
+      "id": "T1.8",
+      "name": "Redirect URL \u2192 actions.url",
+      "passed": true,
+      "detail": "https://authman.sandbox.lp-pl.ppro.com/f?redirecti..."
+    },
+    {
+      "id": "T1.9",
+      "name": "Authorization ID \u2192 referenceNumber",
+      "passed": true,
+      "detail": "authz_72DMa0yfKCZ4BlJmEDIOq"
+    },
+    {
+      "id": "T1.10",
+      "name": "Auth amount DIVIDE_100",
+      "passed": true,
+      "detail": "PPRO 1550 \u2192 CH 15.5"
+    },
+    {
+      "id": "T1.11",
+      "name": "merchantRef echoed",
+      "passed": true,
+      "detail": "CH-IDEAL-E2E-001"
+    },
+    {
+      "id": "T1.12",
+      "name": "CH response assembled",
+      "passed": true,
+      "detail": "All fields mapped"
+    },
+    {
+      "id": "T2.1",
+      "name": "Bancontact accepted",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "id": "T2.2",
+      "name": "PaymentMethod = BANCONTACT",
+      "passed": true,
+      "detail": "BANCONTACT"
+    },
+    {
+      "id": "T2.3",
+      "name": "Country = BE",
+      "passed": true,
+      "detail": "BE"
+    },
+    {
+      "id": "T2.4",
+      "name": "Same adapter handles different APM",
+      "passed": true,
+      "detail": "Single adapter \u2192 multiple APMs"
+    },
+    {
+      "id": "T3.1",
+      "name": "Pix accepted",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "id": "T3.2",
+      "name": "PaymentMethod = PIX",
+      "passed": true,
+      "detail": "PIX"
+    },
+    {
+      "id": "T3.3",
+      "name": "Country = BR, Currency = BRL",
+      "passed": true,
+      "detail": "BR / BRL"
+    },
+    {
+      "id": "T3.4",
+      "name": "QR code in response (Pix scan-to-pay)",
+      "passed": true,
+      "detail": "codeType=QR or codeImage present"
+    },
+    {
+      "id": "S1",
+      "name": "Amount symmetry: MULTIPLY_100 / DIVIDE_100",
+      "passed": true,
+      "detail": "15.50 \u2192 1550 \u2192 15.50"
+    },
+    {
+      "id": "S2",
+      "name": "Currency PASSTHROUGH",
+      "passed": true,
+      "detail": "No modification"
+    },
+    {
+      "id": "S3",
+      "name": "Unique charge IDs per transaction",
+      "passed": true,
+      "detail": "3 unique IDs"
+    },
+    {
+      "id": "S4",
+      "name": "Single adapter \u2192 3 APMs (iDEAL, Bancontact, Pix)",
+      "passed": true,
+      "detail": "Same POST /v1/payment-charges, different paymentMethod"
+    }
+  ]
+}

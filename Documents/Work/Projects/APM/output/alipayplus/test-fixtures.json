@@ -1,0 +1,183 @@
+{
+  "versionContract": {
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "Alipay+ v1",
+    "platforms": {
+      "ucom": {
+        "version": "0.2.3",
+        "included": true
+      },
+      "snappay": {
+        "version": "3.0.9",
+        "included": true
+      }
+    },
+    "generatedAt": "2026-04-12",
+    "patternTemplate": "qr-code-v1",
+    "goldenMappingSource": "Alipay+ official docs + Fiserv integration spec",
+    "confidence": "verified",
+    "safetyChecksPassed": true
+  },
+  "fixtures": {
+    "auth": {
+      "chRequest": {
+        "amount": {
+          "total": 500.0,
+          "currency": "PHP"
+        },
+        "transactionDetails": {
+          "merchantOrderId": "CH-ALIPAYPLUS-001"
+        },
+        "merchantDetails": {
+          "merchantId": "FISERV_MERCHANT_001"
+        },
+        "paymentMethod": {
+          "provider": "ALIPAYPLUS"
+        },
+        "checkoutInteractions": {
+          "channel": "WEB",
+          "returnUrls": {
+            "successUrl": "https://example.com/success"
+          }
+        }
+      },
+      "apmRequest": {
+        "paymentRequestId": "CH-ALIPAYPLUS-001",
+        "paymentAmount": {
+          "value": "50000",
+          "currency": "PHP"
+        },
+        "order": {
+          "merchant": {
+            "referenceMerchantId": "FISERV_MERCHANT_001"
+          },
+          "env": {
+            "terminalType": "WEB"
+          }
+        },
+        "paymentMethod": {
+          "paymentMethodType": "CONNECT_WALLET"
+        },
+        "paymentFactor": {
+          "isInStorePayment": "false",
+          "isCashierPayment": "true",
+          "presentmentMode": "UNIFIED"
+        },
+        "paymentRedirectUrl": "https://example.com/success",
+        "paymentNotifyUrl": "https://commercehub.fiserv.com/webhooks/alipayplus"
+      },
+      "apmResponse": {
+        "result": {
+          "resultStatus": "S",
+          "resultCode": "PAYMENT_IN_PROCESS"
+        },
+        "paymentId": "AP202604120001",
+        "paymentAmount": {
+          "value": "50000",
+          "currency": "PHP"
+        },
+        "normalUrl": "https://render.alipayplus.com/p/f/checkout/index.html?sessionId=xxx",
+        "pspId": "GCASH"
+      },
+      "chResponse": {
+        "gatewayResponse": {
+          "transactionType": "ORDER",
+          "transactionState": "PAYER_ACTION_REQUIRED"
+        },
+        "transactionProcessingDetails": {
+          "transactionId": "AP202604120001"
+        },
+        "order": {
+          "providerOrderId": "AP202604120001"
+        },
+        "checkoutInteractions": {
+          "actions": {
+            "type": "WEB_REDIRECTION",
+            "url": "https://render.alipayplus.com/p/f/checkout/index.html?sessionId=xxx"
+          }
+        },
+        "paymentReceipt": {
+          "approvedAmount": {
+            "total": 500.0,
+            "currency": "PHP"
+          }
+        },
+        "paymentMethod": {
+          "provider": "ALIPAYPLUS",
+          "type": "GCASH"
+        }
+      }
+    },
+    "refund": {
+      "chRequest": {
+        "referenceTransactionDetails": {
+          "referenceTransactionId": "AP202604120001"
+        },
+        "transactionDetails": {
+          "merchantOrderId": "CH-REFUND-001"
+        },
+        "amount": {
+          "total": 200.0,
+          "currency": "PHP"
+        }
+      },
+      "apmRequest": {
+        "paymentId": "AP202604120001",
+        "refundRequestId": "CH-REFUND-001",
+        "refundAmount": {
+          "value": "20000",
+          "currency": "PHP"
+        }
+      },
+      "apmResponse": {
+        "result": {
+          "resultStatus": "S"
+        },
+        "refundId": "RF202604120001",
+        "refundAmount": {
+          "value": "20000",
+          "currency": "PHP"
+        }
+      },
+      "chResponse": {
+        "gatewayResponse": {
+          "transactionState": "REFUNDED"
+        },
+        "paymentReceipt": {
+          "approvedAmount": {
+            "total": 200.0,
+            "currency": "PHP"
+          },
+          "processorResponseDetails": {
+            "referenceNumber": "RF202604120001"
+          }
+        }
+      }
+    },
+    "cancel": {
+      "chRequest": {
+        "referenceTransactionDetails": {
+          "referenceTransactionId": "AP202604120001"
+        },
+        "transactionDetails": {
+          "merchantOrderId": "CH-ALIPAYPLUS-001"
+        }
+      },
+      "apmRequest": {
+        "paymentId": "AP202604120001",
+        "paymentRequestId": "CH-ALIPAYPLUS-001"
+      },
+      "apmResponse": {
+        "result": {
+          "resultStatus": "S",
+          "resultCode": "SUCCESS"
+        }
+      },
+      "chResponse": {
+        "gatewayResponse": {
+          "transactionState": "VOIDED"
+        }
+      }
+    }
+  }
+}

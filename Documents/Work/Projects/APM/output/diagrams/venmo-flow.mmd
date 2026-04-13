@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Venmo Adapter
+    participant CH as CommerceHub API
+    participant APM as Venmo
+    participant C as Customer
+
+    M->>SDK: createCheckout({ apm: 'venmo' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render Venmo button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format
+    A->>CH: POST /api/venmo/tokenize (CommerceHub format)
+    Note over CH: Transform CH request to Venmo format
+    CH->>APM: POST /provider/orders (Venmo format)
+    APM-->>CH: { redirectUrl, requestId }
+    Note over CH: Transform Venmo response to CH format
+    CH-->>A: { redirectUrl } (CH format)
+    A-->>SDK: emit REDIRECT_REQUIRED { url }
+    Note over C: Customer redirected to Venmo
+    C->>APM: Approve payment
+    APM-->>M: Redirect back with token
+    M->>SDK: checkout.handleRedirectReturn(params)
+    SDK->>A: adapter.handleRedirectReturn(queryParams)
+    Note over A: Parse redirect params into CH format
+    A-->>SDK: emit PAYMENT_AUTHORIZED { orderId }

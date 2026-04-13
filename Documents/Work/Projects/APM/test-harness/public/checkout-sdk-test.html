@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout SDK — Universal APM Test (53 APMs)</title>
+  <title>Checkout SDK — Universal APM Test (54 APMs)</title>
   <!-- PayPal SDK with Messages component (sandbox, no signup needed) -->
   <script src="https://www.paypal.com/sdk/js?client-id=sb&components=messages" async></script>
   <!-- Klarna Web SDK for On-Site Messaging (real playground credentials) -->
@@ -155,11 +155,11 @@
 <body>
 
   <h1>Checkout SDK — Universal APM Test</h1>
-  <p class="sub">53 payment methods | 6 patterns | 18 universal events | Callback simulation | Automated sweep</p>
+  <p class="sub">55 payment methods | 6 patterns | 18 universal events | Callback simulation | Automated sweep</p>
 
   <!-- Stats Bar -->
   <div class="stats">
-    <div class="stat"><div class="num" id="s-total">53</div><div class="label">APMs</div></div>
+    <div class="stat"><div class="num" id="s-total">55</div><div class="label">APMs</div></div>
     <div class="stat"><div class="num" id="s-events">0</div><div class="label">Events</div></div>
     <div class="stat"><div class="num" id="s-errors">0</div><div class="label">Errors</div></div>
     <div class="stat"><div class="num" id="s-pattern">--</div><div class="label">Pattern</div></div>
@@ -475,9 +475,11 @@ const APMS = {
     { name: 'PayPay', code: 'paypay', pattern: 'qr-code' },
     { name: 'UPI', code: 'upi', pattern: 'qr-code' },
     { name: "Touch 'n Go", code: 'touchngo', pattern: 'redirect-wallet' },
+    { name: 'Zepto', code: 'zepto', pattern: 'bank-redirect' },
   ],
   'Global': [
     { name: 'PayPal', code: 'paypal', pattern: 'redirect-wallet' },
+    { name: 'PayPal Pay Later', code: 'paypal-paylater', pattern: 'server-bnpl' },
     { name: 'Klarna', code: 'klarna', pattern: 'server-bnpl' },
     { name: 'Afterpay', code: 'afterpay', pattern: 'server-bnpl' },
     { name: 'Affirm', code: 'affirm', pattern: 'server-bnpl' },
@@ -505,6 +507,8 @@ const APM_ENDPOINTS = {
   wechatpay:  { auth: '/api/wechatpay/order', buildBody: (amt) => ({ amount: amt, currency: 'CNY' }) },
   grabpay:    { auth: '/api/grabpay/charge', buildBody: (amt) => ({ amount: amt, currency: 'SGD' }) },
   paypal:     { auth: '/api/paypal/order', buildBody: (amt) => ({ amount: amt, currency: 'USD' }) },
+  'paypal-paylater': { auth: '/api/paypal/paylater-order', buildBody: (amt) => ({ amount: amt, currency: 'USD' }) },
+  zepto: { auth: '/api/zepto/agreement', buildBody: (amt) => ({ amount: amt, currency: 'AUD' }) },
   applepay:   { auth: '/api/applepay/session', buildBody: () => ({ domainName: 'localhost' }) },
   googlepay:  { auth: '/api/googlepay/process', buildBody: (amt) => ({ amount: amt, currency: 'USD' }) },
   affirm:     { auth: '/api/affirm/checkout', buildBody: (amt) => ({ amount: amt, currency: 'USD' }) },
@@ -532,12 +536,12 @@ const PPRO_COUNTRIES = {
 
 const BRAND_COLORS = {
   klarna:'#FFB3C7',cashapp:'#00D632',afterpay:'#00D98B',alipayplus:'#1677FF',wechatpay:'#07C160',grabpay:'#00B14F',
-  paypal:'#FFC439',applepay:'#000',googlepay:'#4285F4',affirm:'#4A4AF4',venmo:'#3D95CE',sezzle:'#392B54',zip:'#7B2DBF',tabapay:'#1B2845',
+  paypal:'#FFC439','paypal-paylater':'#003087',applepay:'#000',googlepay:'#4285F4',affirm:'#4A4AF4',venmo:'#3D95CE',sezzle:'#392B54',zip:'#7B2DBF',tabapay:'#1B2845',
   ideal:'#CC0066',bancontact:'#005498',eps:'#C8192E',blik:'#000',trustly:'#0EE06E',wero:'#4E89FF',sofort:'#EF809F',giropay:'#003A7D',
   przelewy24:'#D13239',postfinance:'#FFCC00',mbway:'#FF0000',swish:'#F8B71C',vipps:'#FF5B24',mobilepay:'#5A78FF',twint:'#000',multibanco:'#0066CC',
   spei:'#004B87',pse:'#005BAA',webpay:'#FF0000',mercadopago:'#009EE3',pix:'#32BCAD',boleto:'#F7941E',oxxo:'#CD1B2A',efecty:'#00A651',
   rapipago:'#009EDB',pagoefectivo:'#FFCC00',paynow:'#7B2D8E',gcash:'#007DFE',maya:'#01C853',linepay:'#00C300',kakaopay:'#FFEB00',
-  dana:'#118EEA',ovo:'#4C2A86',shopeepay:'#EE4D2D',touchngo:'#005ABB',alipay:'#1677FF',paypay:'#FF0033',upi:'#5F259F',konbini:'#FF6600',
+  dana:'#118EEA',ovo:'#4C2A86',shopeepay:'#EE4D2D',touchngo:'#005ABB',alipay:'#1677FF',paypay:'#FF0033',upi:'#5F259F',konbini:'#FF6600',zepto:'#6C63FF',
 };
 
 // ================================================================
@@ -563,8 +567,8 @@ const CALLBACK_GROUPS = {
 };
 
 const CALLBACK_SUPPORT = {
-  SHIPPING_ADDRESS_CHANGED: { native: ['applepay','googlepay'], simulated: ['paypal','afterpay'] },
-  SHIPPING_METHOD_CHANGED:  { native: ['applepay','googlepay'], simulated: ['paypal','afterpay'] },
+  SHIPPING_ADDRESS_CHANGED: { native: ['applepay','googlepay'], simulated: ['paypal','paypal-paylater','afterpay'] },
+  SHIPPING_METHOD_CHANGED:  { native: ['applepay','googlepay'], simulated: ['paypal','paypal-paylater','afterpay'] },
   COUPON_CODE_CHANGED:      { native: ['applepay','googlepay'] },
   PAYMENT_METHOD_SELECTED:  { native: ['applepay'] },
   BILLING_ADDRESS_CHANGED:  { native: ['applepay'] },
@@ -887,22 +891,25 @@ async function renderAdapter() {
   }
 
   // === PROMOTIONAL MESSAGING WIDGETS ===
-  const PROMO_APMS = ['klarna','afterpay','paypal','affirm','sezzle','zip'];
+  const PROMO_APMS = ['klarna','afterpay','paypal','paypal-paylater','affirm','sezzle','zip'];
   if (PROMO_APMS.includes(code)) {
     const promoContainer = document.createElement('div');
     promoContainer.id = 'promo-message-container';
     promoContainer.style.cssText = 'margin-top:12px;padding:12px;background:#1a1a2a;border:1px solid #555;border-radius:8px;';
     promoContainer.innerHTML = '<div style="font-size:0.7em;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Promotional Messaging Widget</div>';
 
-    if (code === 'paypal' && window.paypal?.Messages) {
+    if ((code === 'paypal' || code === 'paypal-paylater') && window.paypal?.Messages) {
       // REAL PayPal Messages (sandbox, no signup needed)
       const ppDiv = document.createElement('div');
       ppDiv.id = 'pp-promo-message';
       promoContainer.appendChild(ppDiv);
       container.appendChild(promoContainer);
       try {
-        paypal.Messages({ amount: 50, style: { layout: 'text', logo: { type: 'primary', position: 'left' }, text: { color: 'black', size: 12 } } }).render('#pp-promo-message');
-        logEvent('PROMO_MESSAGE_RENDERED', { provider: 'paypal', type: 'real_sdk', amount: 50 });
+        const msgStyle = code === 'paypal-paylater'
+          ? { layout: 'flex', color: 'blue', ratio: '8x1' }
+          : { layout: 'text', logo: { type: 'primary', position: 'left' }, text: { color: 'black', size: 12 } };
+        paypal.Messages({ amount: 50, style: msgStyle }).render('#pp-promo-message');
+        logEvent('PROMO_MESSAGE_RENDERED', { provider: code, type: 'real_sdk', amount: 50 });
       } catch(e) { promoContainer.innerHTML += '<div style="color:#f44336;font-size:0.75em;">PayPal Messages failed: ' + e.message + '</div>'; }
     } else if (code === 'sezzle') {
       // REAL Sezzle static widget (no UUID needed)

@@ -1,5 +1,5 @@
 /**
- * Auto-registration of all 53 APM adapters into the global registry.
+ * Auto-registration of all 55 APM adapters into the global registry.
  *
  * Import this file to make all adapters available via createCheckout({ apm: '...' }).
  * Adapters are registered lazily — the adapter code runs on import but SDK loading
@@ -23,6 +23,8 @@ import { venmoAdapter } from './adapters/venmo-adapter.js';
 import { sezzleAdapter } from './adapters/sezzle-adapter.js';
 import { zipAdapter } from './adapters/zip-adapter.js';
 import { tabapayAdapter } from './adapters/tabapay-adapter.js';
+import { paypalPaylaterAdapter } from './adapters/paypal-paylater-adapter.js';
+import { zeptoAdapter } from './adapters/zepto-adapter.js';
 
 // --- PPRO-routed adapters: Europe (16) ---
 import { idealAdapter } from './adapters/ideal-adapter.js';
@@ -71,11 +73,11 @@ import { konbiniAdapter } from './adapters/konbini-adapter.js';
 
 // Register all adapters
 const allAdapters = [
-  // Direct-integration (14)
+  // Direct-integration (16)
   klarnaAdapter, cashappAdapter, afterpayAdapter, alipayplusAdapter,
-  wechatpayAdapter, grabpayAdapter, paypalAdapter, applepayAdapter,
+  wechatpayAdapter, grabpayAdapter, paypalAdapter, paypalPaylaterAdapter, applepayAdapter,
   googlepayAdapter, affirmAdapter, venmoAdapter, sezzleAdapter,
-  zipAdapter, tabapayAdapter,
+  zipAdapter, tabapayAdapter, zeptoAdapter,
   // PPRO Europe (16)
   idealAdapter, bancontactAdapter, epsAdapter, blikAdapter,
   trustlyAdapter, weroAdapter, sofortAdapter, giropayAdapter,

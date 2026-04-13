@@ -1,0 +1,35 @@
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as PostFinance Adapter
+    participant CH as CommerceHub API
+    participant PPRO as PPRO Gateway
+    participant Bank as PostFinance / Bank
+
+    M->>SDK: createCheckout({ apm: 'postfinance' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render PostFinance button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format (amount x100, currency)
+    A->>CH: POST /api/ppro/charge (CommerceHub format)
+    Note over CH: Transform CH request to PPRO format (paymentMethod, country, currency)
+    CH->>PPRO: POST /v1/payment-charges (PPRO format)
+    PPRO->>Bank: Initiate bank authorization
+    Bank-->>PPRO: { redirectUrl }
+    PPRO-->>CH: { chargeId, redirectUrl }
+    Note over CH: Transform PPRO response to CH format
+    CH-->>A: { redirectUrl } (CH format)
+    A-->>SDK: emit REDIRECT_REQUIRED { url }
+    Note over Bank: Customer authenticates with bank
+    Bank-->>M: Redirect back with status
+    M->>SDK: checkout.handleRedirectReturn(params)
+    SDK->>A: adapter.handleRedirectReturn(queryParams)
+    Note over A: Parse redirect params into CH format
+    A->>CH: GET /status { chargeId }
+    CH-->>A: { status: CAPTURED }
+    A-->>SDK: emit PAYMENT_AUTHORIZED

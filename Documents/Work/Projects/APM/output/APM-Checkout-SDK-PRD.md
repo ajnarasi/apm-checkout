@@ -15,14 +15,14 @@ This document defines the product requirements for a universal checkout SDK adap
 **Key outcomes:**
 
 - **Integration velocity:** Reduces per-APM integration from 4-6 weeks to 2-3 days using pre-built adapters and a shared adapter interface.
-- **Coverage:** 53 APMs spanning US, Europe, LATAM, and APAC markets across 6 patterns: redirect, widget, QR code, native SDK, iframe, and static display.
+- **Coverage:** 55 APMs spanning US, Europe, LATAM, and APAC markets across 6 patterns: redirect, widget, QR code, native SDK, iframe, and static display.
 - **TypeScript-first:** Core SDK authored in TypeScript with compiled JavaScript output for broad consumption. Full type safety across adapter contracts, event payloads, and error structures.
 - **Universal event bus:** 18 standardized lifecycle events with strict ordering enforcement, enabling consistent analytics, error handling, and UX orchestration regardless of underlying APM behavior.
 - **Standardized errors:** 12 error codes with retry policies, covering the full failure surface from network timeouts to provider declines.
-- **Plugin architecture:** Adapters register via a factory pattern. The PPRO factory alone covers 39 redirect-based APMs through a single parameterized adapter. 14 additional APMs use direct-integration adapters for provider-specific SDKs.
-- **Real SDK integrations delivered:** Klarna (widget rendering + On-Site Messaging), CashApp Pay (QR code generation), Google Pay (TEST environment button), PayPal (Messages promotional component), Sezzle (static promotional widget).
+- **Plugin architecture:** Adapters register via a factory pattern. The PPRO factory alone covers 39 redirect-based APMs through a single parameterized adapter. 15 additional APMs use direct-integration adapters for provider-specific SDKs.
+- **Real SDK integrations delivered:** Klarna (widget rendering + On-Site Messaging), CashApp Pay (QR code generation), Google Pay (TEST environment button), PayPal (Messages promotional component), PayPal Pay Later (BNPL messaging with Pay in 4 / Pay Monthly), Sezzle (static promotional widget).
 - **Promotional messaging:** Real SDK-driven promotional messaging for Klarna OSM, PayPal Messages, and Sezzle widgets. Simulated messaging for Afterpay, Affirm, and Zip.
-- **Test coverage:** 239/239 API integration tests passing, 49/49 unit tests passing, 53/53 callback sweep passing across all registered adapters.
+- **Test coverage:** 239/239 API integration tests passing, 49/49 unit tests passing, 55/55 callback sweep passing across all registered adapters.
 
 The framework is architected to serve as the payments frontend infrastructure layer, enabling rapid market entry and APM coverage expansion without proportional engineering headcount growth.
 
@@ -46,7 +46,7 @@ Each APM integration today is treated as a standalone engineering project. A sin
 
 ### The Scale Problem
 
-With 53 APMs required for full global market coverage:
+With 55 APMs required for full global market coverage:
 
 - Sequential delivery at 4-6 weeks each = **212-318 engineering weeks = 4-6 years** with a single engineer.
 - Even with 2 dedicated engineers working in parallel, full coverage would take **2-3 years**.
@@ -73,7 +73,7 @@ A plugin-based adapter framework that standardizes APM integration behind a univ
 3. **Direct-Integration Adapters** — 14 adapters for APMs requiring provider-specific SDK loading, widget rendering, or native browser API access (e.g., Klarna, CashApp, Google Pay, Apple Pay, PayPal).
 4. **Universal Event Bus** — A pub/sub event system emitting 18 standardized events with strict ordering. Consumers subscribe once and receive consistent payloads regardless of APM.
 5. **Error Taxonomy** — 12 error codes covering all failure modes. Each code includes retry eligibility and recommended retry policy.
-6. **Automated Test Harness** — API-level integration tests, unit tests for adapter logic, and a full callback sweep that exercises all 53 adapters end-to-end.
+6. **Automated Test Harness** — API-level integration tests, unit tests for adapter logic, and a full callback sweep that exercises all 55 adapters end-to-end.
 
 ### Public API
 
@@ -97,7 +97,7 @@ checkout.teardown();                        // Cleanup: unmount UI, release reso
 
 ## 4. APM Inventory
 
-53 APMs across 4 regions and 6 integration patterns.
+55 APMs across 4 regions and 6 integration patterns.
 
 | # | Code | Name | Region | Pattern | Sandbox Status |
 |---|------|------|--------|---------|----------------|
@@ -154,6 +154,8 @@ checkout.teardown();                        // Cleanup: unmount UI, release reso
 | 51 | TRUEMONEY | TrueMoney | APAC-TH | Redirect (PPRO) | Active |
 | 52 | LINEPAY | LINE Pay | APAC-TH/TW/JP | Redirect (PPRO) | Active |
 | 53 | PAYPAY | PayPay | APAC-JP | Redirect (PPRO) | Active |
+| 54 | PAYPAL_PAYLATER | PayPal Pay Later | Global | Server BNPL | Active |
+| 55 | ZEPTO | Zepto | APAC-AU | Bank Redirect (PayTo) | Active |
 
 ---
 
@@ -243,6 +245,190 @@ checkout.authorize()                   // User clicks -> payment flow executes
     |                                  // Emits: authorize:start, authorize:complete
     v                                  //   or:  authorize:error
 AuthorizeResult { status, transactionId, providerRef }
+```
+
+---
+
+## 5a. Integration Flow Diagrams
+
+Each of the 6 APM patterns follows a distinct integration flow. The key architectural concept is **two format conversions**:
+1. **Adapter (client-side)**: Converts merchant paymentData into CommerceHub (CH) format via `mapConfig()`
+2. **CommerceHub API (server-side)**: Converts CH format into the APM provider's native API format
+
+### Server BNPL Flow (Klarna, Afterpay, Affirm, Sezzle, Zip, PayPal Pay Later)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as BNPL Adapter
+    participant CH as CommerceHub API
+    participant APM as BNPL Provider
+
+    M->>SDK: createCheckout({ apm })
+    SDK->>A: adapter.loadSDK()
+    SDK->>A: adapter.init(config, eventBus)
+    Note over A: mapConfig(): Convert merchant config to CH format
+    A->>CH: POST /api/{apm}/session (CH format)
+    Note over CH: Transform CH request to Provider format
+    CH->>APM: POST /provider/sessions (Provider format)
+    APM-->>CH: { session_id, client_token }
+    Note over CH: Transform Provider response to CH format
+    CH-->>A: { providerOrderId, paymentToken } (CH format)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    SDK->>A: adapter.render(container)
+    Note over A: BNPL widget loads
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: Customer completes BNPL approval
+    A-->>SDK: emit PAYMENT_AUTHORIZED { authToken }
+    Note over A: getServerHandoff(): CH-format capture request
+    M->>CH: POST /capture { authToken } (CH format)
+    Note over CH: Transform CH capture to Provider format
+    CH->>APM: POST /provider/capture (Provider format)
+    APM-->>CH: { order_id, status: CAPTURED }
+    CH-->>M: { transactionState: AUTHORIZED } (CH format)
+```
+
+### Redirect Wallet Flow (PayPal, CashApp, Venmo, GrabPay)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Wallet Adapter
+    participant CH as CommerceHub API
+    participant APM as Wallet Provider
+
+    M->>SDK: createCheckout({ apm })
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    SDK->>A: adapter.render(container)
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format
+    A->>CH: POST /api/{apm}/order (CH format)
+    Note over CH: Transform CH request to Provider format
+    CH->>APM: POST /provider/orders (Provider format)
+    APM-->>CH: { redirectUrl }
+    Note over CH: Transform Provider response to CH format
+    CH-->>A: { redirectUrl } (CH format)
+    A-->>SDK: emit REDIRECT_REQUIRED { url }
+    Note over APM: Customer approves payment
+    APM-->>M: Redirect back with token
+    Note over A: Parse redirect params into CH format
+    A-->>SDK: emit PAYMENT_AUTHORIZED
+```
+
+### Bank Redirect Flow (iDEAL, Bancontact, EPS, BLIK, Zepto, via PPRO)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Bank Adapter
+    participant CH as CommerceHub API
+    participant PPRO as PPRO Gateway
+    participant Bank as Bank
+
+    M->>SDK: createCheckout({ apm })
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format (amount x100)
+    A->>CH: POST /api/ppro/charge (CH format)
+    Note over CH: Transform CH request to PPRO format
+    CH->>PPRO: POST /v1/payment-charges (PPRO format)
+    PPRO->>Bank: Initiate auth
+    Bank-->>PPRO: { redirectUrl }
+    PPRO-->>CH: { chargeId, redirectUrl }
+    Note over CH: Transform PPRO response to CH format
+    CH-->>A: { redirectUrl } (CH format)
+    A-->>SDK: emit REDIRECT_REQUIRED { url }
+    Note over Bank: Customer authenticates
+    Bank-->>M: Redirect back
+    Note over A: Parse redirect params into CH format
+    A-->>SDK: emit PAYMENT_AUTHORIZED
+```
+
+### QR Code Flow (Alipay+, WeChat Pay, Pix, UPI)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as QR Adapter
+    participant CH as CommerceHub API
+    participant C as Customer (Mobile)
+
+    M->>SDK: createCheckout({ apm })
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format
+    A->>CH: POST /api/{apm}/pay (CH format)
+    Note over CH: Transform CH request to Provider format
+    CH-->>A: { qrCodeUrl } (CH format)
+    A-->>SDK: emit QR_CODE_GENERATED { qrCodeUrl }
+    Note over A: Display QR code
+    C->>A: Scan and approve
+    loop Poll every 3s (CH format)
+        A->>CH: GET /status
+        Note over CH: Query Provider for status
+    end
+    A-->>SDK: emit PAYMENT_AUTHORIZED
+```
+
+### Voucher/Cash Flow (Boleto, OXXO, Efecty, Konbini)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Voucher Adapter
+    participant CH as CommerceHub API
+    participant PPRO as PPRO Gateway
+
+    M->>SDK: createCheckout({ apm })
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format (amount x100)
+    A->>CH: POST /api/ppro/charge (CH format)
+    Note over CH: Transform CH request to PPRO format
+    CH->>PPRO: POST /v1/payment-charges (PPRO format)
+    PPRO-->>CH: { voucherCode, expiresAt }
+    Note over CH: Transform PPRO response to CH format
+    CH-->>A: { voucherCode, expiresAt } (CH format)
+    A-->>SDK: emit VOUCHER_CODE_GENERATED { code }
+    Note over A: Display voucher/barcode
+    Note over PPRO: Customer pays offline
+    PPRO-->>CH: Webhook: confirmed
+```
+
+### Native Wallet Flow (Apple Pay, Google Pay)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Native Wallet Adapter
+    participant Browser as Browser API
+    participant CH as CommerceHub API
+
+    M->>SDK: createCheckout({ apm })
+    SDK->>A: adapter.init(config, eventBus)
+    A->>Browser: canMakePayments()
+    Browser-->>A: true
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    SDK->>A: adapter.authorize(paymentData)
+    A->>Browser: Show payment sheet
+    Note over Browser: Biometric auth
+    Browser-->>A: { paymentToken }
+    Note over A: Convert browser token to CH format
+    A-->>SDK: emit PAYMENT_AUTHORIZED { token }
+    Note over A: getServerHandoff(): CH-format process request
+    M->>CH: POST /api/{apm}/process { token } (CH format)
+    Note over CH: Transform CH request to Provider token format
+    CH-->>M: { transactionState: AUTHORIZED } (CH format)
 ```
 
 ---
@@ -402,7 +588,7 @@ All events follow the pattern `category:action` and carry typed payloads. The ev
 | Sprint 11 | Touch 'n Go, DANA, OVO, GCash, Maya | SEA wallets |
 | Sprint 12 | PromptPay, TrueMoney, LINE Pay, PayPay | Thailand, Taiwan, Japan |
 
-**Exit criteria:** All 53/53 adapters passing callback sweep, full regional coverage validated.
+**Exit criteria:** All 55/55 adapters passing callback sweep, full regional coverage validated.
 
 ---
 
@@ -414,11 +600,11 @@ All events follow the pattern `category:action` and carry typed payloads. The ev
 |-----------|-------|-------------|--------|
 | API Integration Tests | 239/239 | All passing | PASS |
 | Unit Tests | 49/49 | All passing | PASS |
-| Callback Sweep | 53/53 | All adapters respond to init/render/authorize/teardown | PASS |
+| Callback Sweep | 55/55 | All adapters respond to init/render/authorize/teardown | PASS |
 
 ### Per-Adapter Validation
 
-Each of the 53 adapters must satisfy:
+Each of the 55 adapters must satisfy:
 
 - **Callback sweep:** `init()`, `render()`, `authorize()`, and `teardown()` execute without throwing.
 - **Styling assertions:** 22 assertions per APM verifying brand compliance (logo dimensions, color values, font family, border radius, padding, responsive breakpoints, dark mode, hover states, focus indicators, loading spinners, error state styling, disabled state, container sizing, z-index layering, animation timing, button height, minimum tap target, contrast ratio, RTL support, overflow handling, shadow values, opacity transitions).
@@ -464,13 +650,13 @@ PPRO factory APMs require even less effort since the adapter logic is fully para
 
 | Scenario | Engineers | Duration |
 |----------|-----------|----------|
-| 53 APMs without framework | 2 | 2-3 years |
-| 53 APMs with framework (14 direct + 39 PPRO) | 2 | 3-4 months |
+| 55 APMs without framework | 2 | 2-3 years |
+| 55 APMs with framework (16 direct + 39 PPRO) | 2 | 3-4 months |
 | **Acceleration factor** | — | **6-9x faster** |
 
 ### Breakdown
 
-- 14 direct-integration adapters x 2.5 days = 35 engineering days
+- 16 direct-integration adapters x 2.5 days = 35 engineering days
 - 39 PPRO factory adapters x 1 day = 39 engineering days
 - Framework core (event bus, error taxonomy, test harness) = 20 engineering days
 - Total = 94 engineering days
@@ -487,7 +673,7 @@ PPRO factory APMs require even less effort since the adapter logic is fully para
 | Adapter | A module implementing the APMAdapter interface for a specific payment provider |
 | PPRO | Payment infrastructure provider that aggregates 39+ redirect-based APMs behind a single API |
 | OSM | On-Site Messaging — promotional widgets displayed on product/cart pages |
-| Callback Sweep | Automated test that exercises init/render/authorize/teardown across all 53 adapters |
+| Callback Sweep | Automated test that exercises init/render/authorize/teardown across all 55 adapters |
 | BNPL | Buy Now Pay Later — installment payment providers (Klarna, Affirm, Afterpay, Sezzle, Zip) |
 
 ---
@@ -498,7 +684,7 @@ PPRO factory APMs require even less effort since the adapter logic is fully para
 2. **PPRO sandbox parity:** Confirm all 39 PPRO APMs have functional sandbox environments for e2e testing.
 3. **Rate limiting:** Define per-provider rate limit handling and circuit breaker thresholds.
 4. **Analytics integration:** Confirm event bus payload schema aligns with downstream analytics pipeline.
-5. **Accessibility:** WCAG 2.1 AA compliance audit for all rendered components across 53 APMs.
+5. **Accessibility:** WCAG 2.1 AA compliance audit for all rendered components across 55 APMs.
 
 ---
 

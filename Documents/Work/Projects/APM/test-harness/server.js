@@ -20,6 +20,7 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 
 app.use(express.json());
@@ -656,6 +657,33 @@ app.post('/api/paypal/order', async (req, res) => {
   });
 });
 
+app.post('/api/paypal/paylater-order', async (req, res) => {
+  const orderId = `PPL_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  res.json({
+    id: orderId,
+    status: 'CREATED',
+    paymentMethod: 'paylater',
+    links: [{ rel: 'approve', href: `https://www.sandbox.paypal.com/checkoutnow?token=${orderId}&fundingSource=paylater` }],
+    _raw: { id: orderId, status: 'CREATED', payment_source: { pay_later: { experience_context: { payment_method_preference: 'IMMEDIATE_PAYMENT_REQUIRED' } } } }
+  });
+});
+
+app.post('/api/zepto/agreement', async (req, res) => {
+  const agreementId = `ZPT_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  res.json({
+    id: agreementId,
+    status: 'pending_authorization',
+    paymentMethod: 'payto',
+    _raw: {
+      uid: agreementId,
+      status: 'pending_authorization',
+      authorization_url: `https://go.sandbox.zeptopayments.com/authorize/${agreementId}`,
+      type: 'payto_agreement',
+      channels: ['new_payments_platform'],
+    }
+  });
+});
+
 // Apple Pay config
 const APPLEPAY = {
   merchantId: 'merchant.app.vercel.hottopic',
@@ -762,6 +790,8 @@ app.get('/api/health', async (req, res) => {
     grabpay: 'mock',
     affirm: 'mock',
     paypal: 'mock',
+    'paypal-paylater': 'mock',
+    zepto: 'mock',
     applepay: 'sandbox',  // merchant cert: merchant.app.vercel.hottopic
     googlepay: 'mock',
   };
@@ -857,14 +887,105 @@ app.get('/api/test-log/clear', (req, res) => {
   res.json({ message: 'Test log cleared' });
 });
 
+// ============== DOCUMENTATION ENDPOINTS ==============
+
+const outputDir = path.join(__dirname, '..', 'output');
+const sdkSrcDir = path.join(__dirname, '..', 'checkout-sdk', 'src');
+const sdkDistDir = path.join(__dirname, '..', 'checkout-sdk', 'dist');
+
+app.get('/api/docs/confluence', (req, res) => {
+  try {
+    const content = fs.readFileSync(path.join(outputDir, 'APM-Checkout-SDK-Confluence.md'), 'utf-8');
+    res.type('text/plain').send(content);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/docs/prd', (req, res) => {
+  try {
+    const content = fs.readFileSync(path.join(outputDir, 'APM-Checkout-SDK-PRD.md'), 'utf-8');
+    res.type('text/plain').send(content);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/docs/requirements', (req, res) => {
+  try {
+    const content = fs.readFileSync(path.join(outputDir, 'checkout-sdk-requirements-matrix.csv'), 'utf-8');
+    res.type('text/plain').send(content);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/docs/tracker', (req, res) => {
+  try {
+    const content = fs.readFileSync(path.join(outputDir, 'APM-Checkout-SDK-Tracker.csv'), 'utf-8');
+    res.type('text/plain').send(content);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+function walkDir(dir, base) {
+  const results = [];
+  const items = fs.readdirSync(dir, { withFileTypes: true });
+  for (const item of items) {
+    const rel = path.join(base, item.name);
+    if (item.isDirectory()) {
+      results.push({ name: item.name, path: rel, type: 'dir', children: walkDir(path.join(dir, item.name), rel) });
+    } else {
+      results.push({ name: item.name, path: rel, type: 'file', size: fs.statSync(path.join(dir, item.name)).size });
+    }
+  }
+  return results;
+}
+
+app.get('/api/docs/sdk-tree', (req, res) => {
+  try {
+    const tree = {
+      src: walkDir(sdkSrcDir, 'src'),
+      dist: walkDir(sdkDistDir, 'dist'),
+    };
+    res.json(tree);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/docs/sdk/*', (req, res) => {
+  try {
+    const filePath = req.params[0];
+    const sdkBase = path.join(__dirname, '..', 'checkout-sdk');
+    const fullPath = path.join(sdkBase, filePath);
+    if (!fullPath.startsWith(sdkBase)) return res.status(403).json({ error: 'Access denied' });
+    const content = fs.readFileSync(fullPath, 'utf-8');
+    res.type('text/plain').send(content);
+  } catch (err) { res.status(404).json({ error: err.message }); }
+});
+
+app.get('/api/docs/openapi', (req, res) => {
+  try {
+    const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'openapi.json'), 'utf-8'));
+    res.json(spec);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/docs/diagrams/:apm', (req, res) => {
+  try {
+    const content = fs.readFileSync(path.join(outputDir, 'diagrams', req.params.apm + '-flow.mmd'), 'utf-8');
+    res.type('text/plain').send(content);
+  } catch (err) { res.status(404).json({ error: err.message }); }
+});
+
+app.get('/api/docs/diagrams', (req, res) => {
+  try {
+    const files = fs.readdirSync(path.join(outputDir, 'diagrams')).filter(f => f.endsWith('.mmd'));
+    res.json(files.map(f => f.replace('-flow.mmd', '')));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ============== START ==============
 const PORT = 3847;
 app.listen(PORT, () => {
-  console.log(`\n🧪 APM Test Harness running at http://localhost:${PORT}`);
+  console.log(`\n🧪 APM Launch Kit Portal running at http://localhost:${PORT}`);
+  console.log(`   Launch Kit Portal:      http://localhost:${PORT}/`);
+  console.log(`   E2E Test Page:          http://localhost:${PORT}/checkout-sdk-test.html`);
   console.log(`   Klarna widget test:     http://localhost:${PORT}/klarna.html`);
   console.log(`   CashApp Pay test:       http://localhost:${PORT}/cashapp.html`);
   console.log(`   PPRO 52-APM test:       http://localhost:${PORT}/ppro.html`);
-  console.log(`   Checkout SDK test:      http://localhost:${PORT}/checkout-sdk-test.html`);
   console.log(`   Health check:           http://localhost:${PORT}/api/health`);
   console.log(`   Test results:           http://localhost:${PORT}/api/test-log\n`);
 });

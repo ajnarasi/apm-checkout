@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Google Pay Adapter
+    participant Browser as Browser API
+    participant CH as CommerceHub API
+
+    M->>SDK: createCheckout({ apm: 'googlepay' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.loadSDK()
+    SDK->>A: adapter.init(config, eventBus)
+    A->>Browser: canMakePayments()
+    Browser-->>A: true
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render Google Pay button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    A->>Browser: Show payment sheet
+    Note over Browser: Customer selects card
+    Note over Browser: Biometric authentication
+    Browser-->>A: { paymentToken, billingContact }
+    Note over A: Convert browser token to CH format
+    A-->>SDK: emit PAYMENT_AUTHORIZED { token }
+    Note over A: getServerHandoff(): Return CH-format process request
+    M->>CH: POST /api/googlepay/process { token } (CH format)
+    Note over CH: Transform CH request to Google Pay token format
+    CH->>CH: Process Google Pay payment token
+    CH-->>M: { transactionState: AUTHORIZED } (CH format)

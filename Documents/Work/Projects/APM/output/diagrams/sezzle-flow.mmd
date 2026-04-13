@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Sezzle Adapter
+    participant CH as CommerceHub API
+    participant APM as Sezzle
+
+    M->>SDK: createCheckout({ apm: 'sezzle' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.loadSDK()
+    SDK->>A: adapter.init(config, eventBus)
+    Note over A: mapConfig(): Convert merchant config to CH format
+    A->>CH: POST /api/sezzle/checkout (CommerceHub format)
+    Note over CH: Transform CH request to Sezzle format
+    CH->>APM: POST /provider/sessions (Sezzle format)
+    APM-->>CH: { session_id, client_token }
+    Note over CH: Transform Sezzle response to CH format
+    CH-->>A: { providerOrderId, paymentToken } (CH format)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Sezzle widget loads in container
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: Transform paymentData to CH authorize format
+    Note over A: Customer completes BNPL approval
+    A-->>SDK: emit PAYMENT_AUTHORIZED { authToken }
+    Note over A: getServerHandoff(): Return CH-format capture request
+    M->>CH: POST /capture { authToken } (CH format)
+    Note over CH: Transform CH capture to Sezzle format
+    CH->>APM: POST /provider/capture (Sezzle format)
+    APM-->>CH: { order_id, status: CAPTURED }
+    CH-->>M: { transactionState: AUTHORIZED } (CH format)

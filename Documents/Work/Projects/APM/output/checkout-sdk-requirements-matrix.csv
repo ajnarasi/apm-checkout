@@ -7,6 +7,8 @@ ALIPAYPLUS,Alipay+,APAC,qr-code,Yes,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,
 WECHATPAY,WeChat Pay,APAC,qr-code,Yes,Yes,Yes,No,No,Yes,No,No,No,No,No,No,No,No,No,No,No,No
 GRABPAY,GrabPay,APAC,redirect-wallet,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
 PAYPAL,PayPal,Global,redirect-wallet,Yes,Yes,Yes,Yes,No,No,No,No,No,Yes,Yes,No,No,No,No,No,No,Yes
+PAYPAL_PAYLATER,PayPal Pay Later,Global,server-bnpl,Yes,Yes,Yes,Yes,No,No,No,No,No,Yes,Yes,No,No,No,No,No,No,Yes
+ZEPTO,Zepto,APAC,bank-redirect,Yes,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No
 APPLEPAY,Apple Pay,Global,native-wallet,Yes,Yes,Yes,Yes,No,No,No,No,No,Yes,Yes,Yes,Yes,Yes,No,No,No,No
 GOOGLEPAY,Google Pay,Global,native-wallet,Yes,Yes,Yes,No,No,No,No,No,No,Yes,Yes,Yes,No,No,No,No,No,No
 AFFIRM,Affirm,Global,server-bnpl,Yes,Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,Yes,Yes,Yes
@@ -63,6 +65,8 @@ ALIPAYPLUS,Alipay+,N/A,1.0,none,N/A,Mock,Mock,RSA256,#1677FF
 WECHATPAY,WeChat Pay,N/A,1.0,none,N/A,Mock,Mock,HMAC-SHA256,#07C160
 GRABPAY,GrabPay,N/A,1.0,none,N/A,Mock,Mock,HMAC-SHA256,#00B14F
 PAYPAL,PayPal,paypal.com/sdk/js,v5,async-script,paypal,sandbox.paypal.com,Signup,OAuth2,#FFC439
+PAYPAL_PAYLATER,PayPal Pay Later,paypal.com/sdk/js?enable-funding=paylater,v5,async-script,paypal,sandbox.paypal.com,Sandbox,OAuth2,#003087
+ZEPTO,Zepto,N/A (API-only),API v20260101,none,N/A,api.sandbox.zeptopayments.com,Free Sandbox,OAuth2,#6C63FF
 APPLEPAY,Apple Pay,N/A (browser),v14,payment-request-api,ApplePaySession,Apple Developer,Live,mTLS,#000000
 GOOGLEPAY,Google Pay,pay.google.com/gp/p/js/pay.js,v2,async-script,google.payments.api,TEST mode,Public,None,#4285F4
 AFFIRM,Affirm,cdn1.affirm.com/js/v2/affirm.js,v2,async-script,affirm,sandbox.affirm.com,Signup,API Key,#4A4AF4
@@ -119,6 +123,8 @@ ALIPAYPLUS,Alipay+,Pay with Alipay+,#1677FF,No,qr-code
 WECHATPAY,WeChat Pay,Pay with WeChat Pay,#07C160,No,qr-code
 GRABPAY,GrabPay,Pay with GrabPay,#00B14F,No,redirect-wallet
 PAYPAL,PayPal,Pay with PayPal,#FFC439,Yes,redirect-wallet
+PAYPAL_PAYLATER,PayPal Pay Later,Pay Later with PayPal,#003087,Yes,server-bnpl
+ZEPTO,Zepto,Pay with Zepto,#6C63FF,No,bank-redirect
 APPLEPAY,Apple Pay,Pay with Apple Pay,#000000,No,native-wallet
 GOOGLEPAY,Google Pay,Pay with Google Pay,#4285F4,No,native-wallet
 AFFIRM,Affirm,Pay with Affirm,#4A4AF4,Yes,server-bnpl
@@ -181,6 +187,8 @@ WECHATPAY,refund,/api/wechatpay/refund,POST,MULTIPLY_100
 GRABPAY,auth,/api/grabpay/charge,POST,MULTIPLY_100
 GRABPAY,refund,/api/grabpay/refund,POST,MULTIPLY_100
 PAYPAL,auth,/api/paypal/order,POST,PASSTHROUGH
+PAYPAL_PAYLATER,auth,/api/paypal/paylater-order,POST,PASSTHROUGH
+ZEPTO,auth,/api/zepto/agreement,POST,MULTIPLY_100
 APPLEPAY,auth,/api/applepay/session,POST,PASSTHROUGH
 GOOGLEPAY,auth,/api/googlepay/process,POST,PASSTHROUGH
 AFFIRM,auth,/api/affirm/checkout,POST,PASSTHROUGH
@@ -276,6 +284,8 @@ ALIPAYPLUS,qr-code,N/A,5000,30000,3000,3600000,15000
 WECHATPAY,qr-code,N/A,5000,30000,3000,3600000,15000
 GRABPAY,redirect-wallet,N/A,5000,30000,2000,900000,15000
 PAYPAL,redirect-wallet,10000,5000,30000,2000,900000,15000
+PAYPAL_PAYLATER,server-bnpl,10000,5000,30000,N/A,N/A,15000
+ZEPTO,bank-redirect,N/A,5000,30000,2000,900000,15000
 APPLEPAY,native-wallet,10000,5000,30000,N/A,N/A,15000
 GOOGLEPAY,native-wallet,10000,5000,30000,N/A,N/A,15000
 AFFIRM,server-bnpl,10000,5000,30000,N/A,N/A,15000

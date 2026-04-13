@@ -1,0 +1,39 @@
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Zepto Adapter
+    participant CH as CommerceHub API
+    participant Zepto as Zepto API
+    participant Bank as Customer's Bank
+
+    M->>SDK: createCheckout({ apm: 'zepto' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render Zepto button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format (amount x100, AUD)
+    A->>CH: POST /api/zepto/agreement (CommerceHub format)
+    Note over CH: Transform CH request to Zepto format (OAuth2, PayTo agreement)
+    CH->>Zepto: POST /payto/agreements (Zepto format)
+    Zepto-->>CH: { uid, authorization_url, status: pending }
+    Note over CH: Transform Zepto response to CH format
+    CH-->>A: { authorization_url } (CH format)
+    A-->>SDK: emit REDIRECT_REQUIRED { url }
+    Note over Bank: Customer redirected to bank app
+    Bank-->>Bank: Customer authorizes PayTo agreement
+    Bank-->>Zepto: Agreement authorized
+    Zepto-->>M: Redirect back with agreement_uid
+    M->>SDK: checkout.handleRedirectReturn(params)
+    SDK->>A: adapter.handleRedirectReturn(queryParams)
+    Note over A: Parse redirect params into CH format
+    A-->>SDK: emit PAYMENT_AUTHORIZED { agreementId }
+    Note over A: getServerHandoff(): Return CH-format payment request
+    M->>CH: POST /payments { agreement_uid, amount } (CH format)
+    Note over CH: Transform CH payment to Zepto format
+    CH->>Zepto: POST /payments (Zepto format)
+    Zepto-->>CH: { payment_id, status: completed }
+    CH-->>M: { transactionState: AUTHORIZED } (CH format)

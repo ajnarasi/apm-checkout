@@ -1,0 +1,31 @@
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Efecty Adapter
+    participant CH as CommerceHub API
+    participant PPRO as PPRO Gateway
+    participant C as Customer
+
+    M->>SDK: createCheckout({ apm: 'efecty' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render Efecty button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format (amount x100)
+    A->>CH: POST /api/ppro/charge (CommerceHub format)
+    Note over CH: Transform CH request to PPRO format
+    CH->>PPRO: POST /v1/payment-charges (PPRO format)
+    PPRO-->>CH: { voucherCode, barcode, expiresAt }
+    Note over CH: Transform PPRO response to CH format
+    CH-->>A: { voucherCode, expiresAt } (CH format)
+    A-->>SDK: emit VOUCHER_CODE_GENERATED { code, expiresAt }
+    Note over A: Display voucher/barcode to customer
+    Note over C: Customer pays at store/bank with voucher
+    PPRO-->>CH: Webhook: payment confirmed
+    CH-->>M: { status: CAPTURED }
+    Note over A: If voucher expires before payment
+    A-->>SDK: emit VOUCHER_EXPIRED

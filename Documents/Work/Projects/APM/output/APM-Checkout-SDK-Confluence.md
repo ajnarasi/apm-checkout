@@ -1,6 +1,6 @@
 # APM Checkout SDK — Hub Page
 
-> Universal checkout adapter framework supporting 53 APMs across 6 integration patterns. TypeScript-first, plugin-based, production-ready.
+> Universal checkout adapter framework supporting 55 APMs across 6 integration patterns. TypeScript-first, plugin-based, production-ready.
 
 ---
 
@@ -9,9 +9,9 @@
 | Resource | Link | Description |
 |----------|------|-------------|
 | PRD | `APM-Checkout-SDK-PRD.md` | Full product requirements document |
-| APM Tracker | `/docs/apm-tracker.xlsx` | Live status tracker for all 53 APMs |
+| APM Tracker | `/docs/apm-tracker.xlsx` | Live status tracker for all 55 APMs |
 | SDK Repo | `checkout-sdk/` | Source code — adapters, event bus, error taxonomy |
-| Test Harness | `checkout-sdk/test/` | 239 API tests, 49 unit tests, 53-adapter callback sweep |
+| Test Harness | `checkout-sdk/test/` | 239 API tests, 49 unit tests, 54-adapter callback sweep |
 | Specs | `/docs/specs/` | Per-APM integration specs and provider documentation |
 | Figma | Design System | Checkout button/widget component library |
 | Runbook | `/docs/runbook.md` | Incident response for APM failures |
@@ -20,7 +20,7 @@
 
 ## What Is This
 
-The APM Checkout SDK is a plugin-based adapter framework that standardizes the integration of 53 alternative payment methods behind a single public API. Instead of building each APM as a standalone 4-6 week engineering project, the framework provides a shared adapter interface, universal event bus (18 events), standardized error taxonomy (12 codes), and automated test harness. The PPRO factory alone covers 39 redirect-based APMs through parameterized configuration rather than custom code. 14 direct-integration adapters handle provider-specific SDKs for Klarna, CashApp, Google Pay, Apple Pay, PayPal, and others. The result: any new APM can be integrated in 2-3 days (or 1 day for PPRO APMs), and the entire 53-APM portfolio can be delivered by 2 engineers in 3-4 months.
+The APM Checkout SDK is a plugin-based adapter framework that standardizes the integration of 53 alternative payment methods behind a single public API. Instead of building each APM as a standalone 4-6 week engineering project, the framework provides a shared adapter interface, universal event bus (18 events), standardized error taxonomy (12 codes), and automated test harness. The PPRO factory alone covers 39 redirect-based APMs through parameterized configuration rather than custom code. 16 direct-integration adapters handle provider-specific SDKs for Klarna, CashApp, Google Pay, Apple Pay, PayPal, and others. The result: any new APM can be integrated in 2-3 days (or 1 day for PPRO APMs), and the entire 53-APM portfolio can be delivered by 2 engineers in 3-4 months.
 
 ---
 
@@ -382,6 +382,243 @@ A: In `.env.test` (not committed). Get values from the team password manager und
 
 **Q: How do I run tests against a specific region's APMs?**
 A: Run `npm run test:sweep -- --region=EU` (options: US, EU, LATAM, APAC).
+
+---
+
+## Flow Diagrams
+
+Each APM follows one of 6 integration patterns. The key architectural concept is **two format conversions**:
+
+1. **Adapter (client-side)**: Converts merchant paymentData into CommerceHub (CH) format via `mapConfig()`
+2. **CommerceHub API (server-side)**: Converts CH format into the APM provider's native API format
+
+Responses flow back through the same two conversions in reverse.
+
+### Server BNPL (Klarna, Afterpay, Affirm, Sezzle, Zip, PayPal Pay Later)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as BNPL Adapter
+    participant CH as CommerceHub API
+    participant APM as BNPL Provider
+
+    M->>SDK: createCheckout({ apm: 'klarna' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.loadSDK()
+    SDK->>A: adapter.init(config, eventBus)
+    Note over A: mapConfig(): Convert merchant config to CH format
+    A->>CH: POST /api/{apm}/session (CommerceHub format)
+    Note over CH: Transform CH request to Provider format
+    CH->>APM: POST /provider/sessions (Provider format)
+    APM-->>CH: { session_id, client_token }
+    Note over CH: Transform Provider response to CH format
+    CH-->>A: { providerOrderId, paymentToken } (CH format)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: BNPL widget loads in container
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: Transform paymentData to CH authorize format
+    Note over A: Customer completes BNPL approval
+    A-->>SDK: emit PAYMENT_AUTHORIZED { authToken }
+    Note over A: getServerHandoff(): Return CH-format capture request
+    M->>CH: POST /capture { authToken } (CH format)
+    Note over CH: Transform CH capture to Provider format
+    CH->>APM: POST /provider/capture (Provider format)
+    APM-->>CH: { order_id, status: CAPTURED }
+    CH-->>M: { transactionState: AUTHORIZED } (CH format)
+```
+
+### Redirect Wallet (PayPal, CashApp, Venmo, GrabPay, + PPRO wallets)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Wallet Adapter
+    participant CH as CommerceHub API
+    participant APM as Wallet Provider
+    participant C as Customer
+
+    M->>SDK: createCheckout({ apm: 'paypal' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render wallet button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format
+    A->>CH: POST /api/{apm}/order (CommerceHub format)
+    Note over CH: Transform CH request to Provider format
+    CH->>APM: POST /provider/orders (Provider format)
+    APM-->>CH: { redirectUrl, requestId }
+    Note over CH: Transform Provider response to CH format
+    CH-->>A: { redirectUrl } (CH format)
+    A-->>SDK: emit REDIRECT_REQUIRED { url }
+    Note over C: Customer redirected to wallet
+    C->>APM: Approve payment
+    APM-->>M: Redirect back with token
+    M->>SDK: checkout.handleRedirectReturn(params)
+    SDK->>A: adapter.handleRedirectReturn(queryParams)
+    Note over A: Parse redirect params into CH format
+    A-->>SDK: emit PAYMENT_AUTHORIZED { orderId }
+```
+
+### Bank Redirect (iDEAL, Bancontact, EPS, BLIK, Trustly, Zepto, + PPRO bank APMs)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Bank Adapter
+    participant CH as CommerceHub API
+    participant PPRO as PPRO Gateway
+    participant Bank as Bank
+
+    M->>SDK: createCheckout({ apm: 'ideal' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render bank redirect button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format (amount x100)
+    A->>CH: POST /api/ppro/charge (CommerceHub format)
+    Note over CH: Transform CH request to PPRO format (paymentMethod, country)
+    CH->>PPRO: POST /v1/payment-charges (PPRO format)
+    PPRO->>Bank: Initiate bank authorization
+    Bank-->>PPRO: { redirectUrl }
+    PPRO-->>CH: { chargeId, redirectUrl }
+    Note over CH: Transform PPRO response to CH format
+    CH-->>A: { redirectUrl } (CH format)
+    A-->>SDK: emit REDIRECT_REQUIRED { url }
+    Note over Bank: Customer authenticates with bank
+    Bank-->>M: Redirect back with status
+    M->>SDK: checkout.handleRedirectReturn(params)
+    SDK->>A: adapter.handleRedirectReturn(queryParams)
+    Note over A: Parse redirect params into CH format
+    A->>CH: GET /status { chargeId }
+    CH-->>A: { status: CAPTURED }
+    A-->>SDK: emit PAYMENT_AUTHORIZED
+```
+
+### QR Code (Alipay+, WeChat Pay, Pix, UPI, TWINT, + PPRO QR APMs)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as QR Adapter
+    participant CH as CommerceHub API
+    participant APM as QR Provider
+    participant C as Customer (Mobile)
+
+    M->>SDK: createCheckout({ apm: 'alipayplus' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render QR payment button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format
+    A->>CH: POST /api/{apm}/pay (CommerceHub format)
+    Note over CH: Transform CH request to Provider format
+    CH->>APM: POST /provider/qr-payments (Provider format)
+    APM-->>CH: { qrCodeUrl, chargeId }
+    Note over CH: Transform Provider response to CH format
+    CH-->>A: { qrCodeUrl } (CH format)
+    A-->>SDK: emit QR_CODE_GENERATED { qrCodeUrl }
+    Note over A: Display QR code
+    C->>APM: Scan QR code with mobile app
+    C->>APM: Approve payment
+    loop Poll every 3s (CH format)
+        A->>CH: GET /status { chargeId }
+        Note over CH: Query Provider for status
+        CH-->>A: { status: PENDING }
+    end
+    CH-->>A: { status: CAPTURED }
+    A-->>SDK: emit PAYMENT_AUTHORIZED
+```
+
+### Voucher/Cash (Boleto, OXXO, Efecty, Konbini, + PPRO voucher APMs)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Voucher Adapter
+    participant CH as CommerceHub API
+    participant PPRO as PPRO Gateway
+    participant C as Customer
+
+    M->>SDK: createCheckout({ apm: 'boleto' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render voucher payment button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format (amount x100)
+    A->>CH: POST /api/ppro/charge (CommerceHub format)
+    Note over CH: Transform CH request to PPRO format
+    CH->>PPRO: POST /v1/payment-charges (PPRO format)
+    PPRO-->>CH: { voucherCode, barcode, expiresAt }
+    Note over CH: Transform PPRO response to CH format
+    CH-->>A: { voucherCode, expiresAt } (CH format)
+    A-->>SDK: emit VOUCHER_CODE_GENERATED { code, expiresAt }
+    Note over A: Display voucher/barcode to customer
+    Note over C: Customer pays at store/bank with voucher
+    PPRO-->>CH: Webhook: payment confirmed
+    CH-->>M: { status: CAPTURED }
+    Note over A: If voucher expires before payment
+    A-->>SDK: emit VOUCHER_EXPIRED
+```
+
+### Native Wallet (Apple Pay, Google Pay)
+
+```mermaid
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as Native Wallet Adapter
+    participant Browser as Browser API
+    participant CH as CommerceHub API
+
+    M->>SDK: createCheckout({ apm: 'applepay' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.loadSDK()
+    SDK->>A: adapter.init(config, eventBus)
+    A->>Browser: canMakePayments()
+    Browser-->>A: true
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render native pay button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    A->>Browser: Show payment sheet
+    Note over Browser: Customer selects card
+    Note over Browser: Biometric authentication
+    Browser-->>A: { paymentToken, billingContact }
+    Note over A: Convert browser token to CH format
+    A-->>SDK: emit PAYMENT_AUTHORIZED { token }
+    Note over A: getServerHandoff(): Return CH-format process request
+    M->>CH: POST /api/{apm}/process { token } (CH format)
+    Note over CH: Transform CH request to Provider token format
+    CH->>CH: Process payment token
+    CH-->>M: { transactionState: AUTHORIZED } (CH format)
+```
 
 ---
 

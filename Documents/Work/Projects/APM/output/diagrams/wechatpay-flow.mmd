@@ -1,0 +1,35 @@
+sequenceDiagram
+    participant M as Merchant Page
+    participant SDK as Checkout SDK
+    participant A as WeChat Pay Adapter
+    participant CH as CommerceHub API
+    participant APM as WeChat Pay
+    participant C as Customer (Mobile)
+
+    M->>SDK: createCheckout({ apm: 'wechatpay' })
+    M->>SDK: checkout.init()
+    SDK->>A: adapter.init(config, eventBus)
+    A-->>SDK: emit PAYMENT_METHOD_READY
+    M->>SDK: checkout.render()
+    SDK->>A: adapter.render(container)
+    Note over A: Render WeChat Pay button
+    M->>SDK: checkout.authorize()
+    SDK->>A: adapter.authorize(paymentData)
+    Note over A: mapConfig(): Convert paymentData to CH format
+    A->>CH: POST /api/wechatpay/order (CommerceHub format)
+    Note over CH: Transform CH request to WeChat Pay format
+    CH->>APM: POST /provider/qr-payments (WeChat Pay format)
+    APM-->>CH: { qrCodeUrl, chargeId }
+    Note over CH: Transform WeChat Pay response to CH format
+    CH-->>A: { qrCodeUrl } (CH format)
+    A-->>SDK: emit QR_CODE_GENERATED { qrCodeUrl }
+    Note over A: Display QR code
+    C->>APM: Scan QR code with mobile app
+    C->>APM: Approve payment
+    loop Poll every 3s (CH format)
+        A->>CH: GET /status { chargeId }
+        Note over CH: Query WeChat Pay for status
+        CH-->>A: { status: PENDING }
+    end
+    CH-->>A: { status: CAPTURED }
+    A-->>SDK: emit PAYMENT_AUTHORIZED

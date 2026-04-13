@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: apm-universal-kit
+    runtime: node
+    buildCommand: cd apm-dashboard && npm run render-build
+    startCommand: cd apm-dashboard && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20

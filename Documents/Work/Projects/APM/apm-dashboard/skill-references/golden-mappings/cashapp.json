@@ -1,0 +1,413 @@
+{
+  "goldenMapping": {
+    "apmId": "CASHAPP",
+    "apmDisplayName": "Cash App Pay",
+    "pattern": "redirect-wallet",
+    "patternVersion": "v1",
+    "source": "tech-lead-manual-mapping",
+    "verifiedBy": "Tech Lead",
+    "verifiedDate": "2026-04",
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "v2",
+    "category": "DIGITAL_WALLET",
+    "regions": ["US"],
+    "currencies": ["USD"],
+    "capabilities": ["auth", "capture", "refund"]
+  },
+
+  "endpoints": {
+    "customerRequest": {
+      "chEndpoint": "POST /checkouts/v1/orders",
+      "providerEndpoint": "POST /customer-request/v1/requests",
+      "description": "Create a Cash App Customer Request to initiate checkout flow",
+      "authFormat": "Authorization: Client {CLIENT_ID}",
+      "verified": true,
+      "sandboxValidated": "2026-04-12"
+    },
+    "auth": {
+      "chEndpoint": "POST /checkouts/v1/orders",
+      "providerEndpoint": "POST /payments (Cash App Payment API — after customer approves)",
+      "description": "Create a payment authorization via Cash App"
+    },
+    "capture": {
+      "chEndpoint": "POST /checkouts/v1/orders",
+      "providerEndpoint": "POST /payments (with capture=true)",
+      "description": "Capture a previously authorized Cash App payment"
+    },
+    "refund": {
+      "chEndpoint": "POST /checkouts/v1/orders",
+      "providerEndpoint": "POST /refunds",
+      "description": "Refund a captured Cash App payment"
+    }
+  },
+
+  "requestMappings": [
+    {
+      "id": "REQ_001",
+      "chField": "amount.total",
+      "chFieldType": "number",
+      "apmField": "payment.amount",
+      "apmFieldType": "integer",
+      "transform": "DECIMAL_TO_CENTS",
+      "transformDetail": "Multiply by 100. CH uses decimal (15.10), CashApp uses cents (1510)",
+      "tier": 1,
+      "required": true,
+      "conditionalRoute": null,
+      "description": "Payment amount"
+    },
+    {
+      "id": "REQ_002",
+      "chField": "amount.currency",
+      "chFieldType": "string",
+      "apmField": "payment.currency",
+      "apmFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "ISO-4217 3-letter code, no conversion needed",
+      "tier": 1,
+      "required": true,
+      "conditionalRoute": null,
+      "description": "Payment currency code"
+    },
+    {
+      "id": "REQ_003",
+      "chField": "transactionDetails.operationType",
+      "chFieldType": "string",
+      "apmField": "payment.capture",
+      "apmFieldType": "boolean",
+      "transform": "ENUM_MAP",
+      "transformDetail": "CAPTURE → true, AUTHORIZE → false",
+      "transformMap": {
+        "CAPTURE": true,
+        "AUTHORIZE": false
+      },
+      "tier": 1,
+      "required": true,
+      "conditionalRoute": null,
+      "description": "Whether to capture immediately or just authorize"
+    },
+    {
+      "id": "REQ_004",
+      "chField": "paymentMethod.paymentToken.tokenData",
+      "chFieldType": "string",
+      "apmField": "payment.grant_id",
+      "apmFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "Grant ID from Customer Request API indicating permission to take payment. Max 256 chars.",
+      "tier": 2,
+      "required": true,
+      "conditionalRoute": null,
+      "description": "CashApp grant ID from Customer Request flow"
+    },
+    {
+      "id": "REQ_005",
+      "chField": "merchantDetails.processorMerchantId",
+      "chFieldType": "string",
+      "apmField": "payment.scope_id",
+      "apmFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "Value depends on payment type — see conditionalRoute",
+      "tier": 2,
+      "required": true,
+      "conditionalRoute": "SCOPE_TYPE_ROUTE",
+      "description": "CashApp scope identifier — routes to merchantId or brandId based on payment type"
+    },
+    {
+      "id": "REQ_006",
+      "chField": "transactionProcessingDetails.transactionId",
+      "chFieldType": "string",
+      "apmField": "payment.reference_id",
+      "apmFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "Commerce Hub transaction ID used as CashApp reference",
+      "tier": 1,
+      "required": true,
+      "conditionalRoute": null,
+      "description": "Transaction reference ID"
+    },
+    {
+      "id": "REQ_007",
+      "chField": "transactionProcessingDetails.transactionId",
+      "chFieldType": "string",
+      "apmField": "idempotency_key",
+      "apmFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "Same transaction ID used for idempotency",
+      "tier": 2,
+      "required": true,
+      "conditionalRoute": null,
+      "description": "Idempotency key for duplicate prevention"
+    },
+    {
+      "id": "REQ_008",
+      "chField": "merchantDetails.ProcessorMerchantKey",
+      "chFieldType": "string",
+      "apmField": "[header] apiKey",
+      "apmFieldType": "string",
+      "transform": "AUTH_INJECTION",
+      "transformDetail": "Used for CashApp HMAC signature header creation, not in request body",
+      "tier": 2,
+      "required": true,
+      "conditionalRoute": null,
+      "description": "API key for CashApp header signature"
+    },
+    {
+      "id": "REQ_009",
+      "chField": "merchantDetails.ProcessorMerchantSecret",
+      "chFieldType": "string",
+      "apmField": "[header] secret",
+      "apmFieldType": "string",
+      "transform": "AUTH_INJECTION",
+      "transformDetail": "Used for CashApp HMAC signature header creation, not in request body",
+      "tier": 2,
+      "required": true,
+      "conditionalRoute": null,
+      "description": "Secret for CashApp header signature"
+    },
+    {
+      "id": "REQ_010",
+      "chField": "transactionProcessingDetails.transactionId",
+      "chFieldType": "string",
+      "apmField": "refund.reference_id",
+      "apmFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "Used for refund operations — references the original payment",
+      "tier": 1,
+      "required": true,
+      "conditionalRoute": null,
+      "description": "Refund reference ID (same as payment reference_id for the original transaction)",
+      "capability": "refund"
+    }
+  ],
+
+  "responseMappings": [
+    {
+      "id": "RES_001",
+      "apmField": "payment.id",
+      "apmFieldType": "string",
+      "chField": "paymentReceipt.processorResponseDetails.referenceNumber",
+      "chFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "Payment ID issued by Cash App. Starts with PWC_ prefix.",
+      "tier": 1,
+      "prefixPattern": "PWC_*",
+      "description": "CashApp payment ID"
+    },
+    {
+      "id": "RES_002",
+      "apmField": "payment.amount",
+      "apmFieldType": "integer",
+      "chField": "paymentReceipt.approvedAmount.total",
+      "chFieldType": "number",
+      "transform": "CENTS_TO_DECIMAL",
+      "transformDetail": "Divide by 100. CashApp returns 1510, CH expects 15.10",
+      "tier": 1,
+      "description": "Approved payment amount"
+    },
+    {
+      "id": "RES_003",
+      "apmField": "grant_id",
+      "apmFieldType": "string",
+      "chField": "paymentMethod.paymentSource.paymentToken.tokenData",
+      "chFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "Grant ID echoed back. Starts with GRG_ prefix.",
+      "tier": 2,
+      "prefixPattern": "GRG_*",
+      "description": "CashApp grant ID in response"
+    },
+    {
+      "id": "RES_004",
+      "apmField": "customer_request_id",
+      "apmFieldType": "string",
+      "chField": "order.providerOrderId",
+      "chFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "Customer Request ID from CashApp. Starts with GRR_ prefix.",
+      "tier": 2,
+      "prefixPattern": "GRR_*",
+      "description": "CashApp customer request ID mapped to CH provider order ID"
+    },
+    {
+      "id": "RES_005",
+      "apmField": "refund.id",
+      "apmFieldType": "string",
+      "chField": "paymentReceipt.processorResponseDetails.referenceNumber",
+      "chFieldType": "string",
+      "transform": "PASS_THROUGH",
+      "transformDetail": "Refund ID issued by Cash App. Starts with PWCR_ prefix.",
+      "tier": 1,
+      "prefixPattern": "PWCR_*",
+      "description": "CashApp refund ID",
+      "capability": "refund"
+    },
+    {
+      "id": "RES_006",
+      "apmField": "request.auth_flow_triggers.desktop_url",
+      "apmFieldType": "string",
+      "chField": "checkoutInteractions.actions.url",
+      "chFieldType": "string",
+      "transform": "DEVICE_URL_SELECT",
+      "transformDetail": "If customer is on desktop, use desktop_url. If mobile, use mobile_url. Map to CH actions.url.",
+      "tier": 2,
+      "alternateApmField": "request.auth_flow_triggers.mobile_url",
+      "description": "Redirect URL for customer action (desktop or mobile)"
+    },
+    {
+      "id": "RES_007",
+      "apmField": "request.channel",
+      "apmFieldType": "string",
+      "chField": "checkoutInteractions.channel",
+      "chFieldType": "string",
+      "transform": "ENUM_MAP",
+      "transformDetail": "ONLINE → WEB, IN_APP → WEB",
+      "transformMap": {
+        "ONLINE": "WEB",
+        "IN_APP": "WEB"
+      },
+      "tier": 2,
+      "description": "Interaction channel mapping"
+    }
+  ],
+
+  "sandboxDiscoveredMappings": {
+    "note": "Additional mappings discovered from live CashApp sandbox response on 2026-04-12",
+    "responseMappings": [
+      {
+        "id": "RES_008",
+        "apmField": "request.status",
+        "apmFieldType": "string",
+        "chField": "order.orderStatus",
+        "chFieldType": "string",
+        "transform": "ENUM_MAP",
+        "transformMap": {"PENDING": "PAYER_ACTION_REQUIRED", "APPROVED": "AUTHORIZED", "DECLINED": "DECLINED"},
+        "tier": 1,
+        "description": "Customer Request status mapped to CH order status"
+      },
+      {
+        "id": "RES_009",
+        "apmField": "request.auth_flow_triggers.qr_code_image_url",
+        "apmFieldType": "string",
+        "chField": "checkoutInteractions.actions.code",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 2,
+        "description": "QR code image URL for in-store/scan-to-pay flows"
+      },
+      {
+        "id": "RES_010",
+        "apmField": "request.created_at",
+        "apmFieldType": "string",
+        "chField": "transactionProcessingDetails.transactionTimestamp",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 2,
+        "description": "Transaction creation timestamp"
+      },
+      {
+        "id": "RES_011",
+        "apmField": "requester_profile.name",
+        "apmFieldType": "string",
+        "chField": "dynamicDescriptors.merchantName",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 2,
+        "description": "Merchant display name from CashApp brand profile"
+      }
+    ],
+    "unmappableFields": [
+      {"apmField": "request.expires_at", "reason": "No CH equivalent for request expiry time"},
+      {"apmField": "request.origin.type", "reason": "CashApp-specific origin tracking, informational only"},
+      {"apmField": "auth_flow_triggers.refreshes_at", "reason": "QR code refresh timing, internal to CashApp"}
+    ]
+  },
+
+  "conditionalRouting": {
+    "SCOPE_TYPE_ROUTE": {
+      "description": "CashApp scope_id routes to different boarding config values based on payment type",
+      "conditionField": "payment_type",
+      "rules": [
+        {
+          "when": "ONE_TIME_PAYMENT",
+          "then": {
+            "sourceValue": "boarding_config.cashapp.merchantId",
+            "additionalBehavior": "amount field is REQUIRED"
+          }
+        },
+        {
+          "when": "ON_FILE_PAYMENT",
+          "then": {
+            "sourceValue": "boarding_config.cashapp.brandId",
+            "additionalBehavior": "amount field is SUPPRESSED (do not pass amount for file_payment). account_ref_id is REQUIRED."
+          }
+        }
+      ]
+    }
+  },
+
+  "authScheme": {
+    "type": "API_KEY_HMAC_SIGNATURE",
+    "description": "CashApp uses API key + secret to create an HMAC signature in the request header",
+    "headerFields": ["apiKey", "secret"],
+    "signatureScheme": "HMAC",
+    "extensionPoint": {
+      "handler": "cashapp-signature-handler",
+      "scope": "AUTH_HEADER_ONLY",
+      "description": "Custom handler for HMAC signature construction. Scoped to auth headers only — cannot modify request body, amount, or currency."
+    }
+  },
+
+  "lifecycle": {
+    "supportedOperations": ["authorize", "capture", "refund"],
+    "unsupportedOperations": ["void", "partial-refund", "incremental-auth", "split-shipment"],
+    "stateMapping": {
+      "CREATED": "PAYER_ACTION_REQUIRED",
+      "AUTHORIZED": "AUTHORIZED",
+      "CAPTURED": "CAPTURED",
+      "REFUNDED": "REFUNDED",
+      "DECLINED": "DECLINED"
+    }
+  },
+
+  "safetyChecks": {
+    "amountSymmetry": {
+      "requestTransform": "DECIMAL_TO_CENTS (×100)",
+      "responseTransform": "CENTS_TO_DECIMAL (÷100)",
+      "symmetric": true,
+      "status": "PASS"
+    },
+    "currencyPreservation": {
+      "requestTransform": "PASS_THROUGH",
+      "responseTransform": "PASS_THROUGH (implicit — currency not in CashApp response, preserved from request)",
+      "status": "PASS"
+    },
+    "idUniqueness": {
+      "transactionId_mappedTo": ["payment.reference_id", "idempotency_key", "refund.reference_id"],
+      "note": "transactionId maps to multiple CashApp fields but each serves a distinct purpose (reference, idempotency, refund ref)",
+      "status": "PASS_WITH_NOTE"
+    },
+    "tier1Coverage": {
+      "allTier1FieldsMapped": true,
+      "tier1Fields": ["amount.total", "amount.currency", "transactionDetails.operationType", "transactionProcessingDetails.transactionId", "paymentReceipt.processorResponseDetails.referenceNumber", "paymentReceipt.approvedAmount.total"],
+      "status": "PASS"
+    }
+  },
+
+  "unmappableFields": [
+    {
+      "apmField": "payment.account_ref_id",
+      "reason": "Only used for ON_FILE_PAYMENT. No direct CH equivalent — requires merchant-level configuration.",
+      "resolution": "Populate from boarding config when payment_type = ON_FILE_PAYMENT"
+    }
+  ],
+
+  "sandboxFidelity": {
+    "knownDiscrepancies": [
+      {
+        "field": "payment.amount",
+        "sandbox": "Accepts any amount",
+        "production": "Minimum $1.00, maximum varies by merchant",
+        "risk": "LOW"
+      }
+    ]
+  }
+}

@@ -1,0 +1,1642 @@
+{
+  "apiVersion": "1.26.0302",
+  "endpoint": "POST /checkouts/v1/orders",
+  "description": "Submit order transaction via Commerce Hub Orders API. Supports card payments, alternative payment methods (APMs), wallet-based flows, and redirect-based checkout interactions.",
+  "headers": {
+    "Content-Type": {
+      "type": "string",
+      "required": true,
+      "description": "Media type of the request body",
+      "example": "application/json"
+    },
+    "Client-Request-Id": {
+      "type": "string",
+      "required": true,
+      "description": "UUID for request tracking and idempotency"
+    },
+    "Api-Key": {
+      "type": "string",
+      "required": true,
+      "description": "Merchant API key obtained from the Developer Portal"
+    },
+    "Timestamp": {
+      "type": "integer",
+      "required": true,
+      "description": "Epoch time in milliseconds"
+    },
+    "Accept-Language": {
+      "type": "string",
+      "required": false,
+      "description": "Preferred response language",
+      "example": "en-US"
+    },
+    "Auth-Token-Type": {
+      "type": "string",
+      "required": true,
+      "description": "Authentication token type",
+      "example": "HMAC",
+      "enum": ["HMAC", "JWT", "AccessToken"]
+    },
+    "Authorization": {
+      "type": "string",
+      "required": true,
+      "description": "Authorization header value corresponding to Auth-Token-Type"
+    }
+  },
+  "requestSchema": {
+    "objects": {
+      "order": {
+        "description": "Top-level order object containing intent, status, and payment method details",
+        "fields": {
+          "orderId": {
+            "type": "string",
+            "required": false,
+            "description": "Unique identifier for the order"
+          },
+          "intent": {
+            "type": "string",
+            "required": false,
+            "description": "Transaction intent",
+            "maxLength": 32,
+            "example": "AUTHORIZE"
+          },
+          "orderStatus": {
+            "type": "string",
+            "required": false,
+            "description": "Current status of the order",
+            "maxLength": 32,
+            "example": "PAYER_ACTION_REQUIRED"
+          },
+          "paymentMethod": {
+            "type": "object",
+            "required": false,
+            "description": "Payment method associated with the order",
+            "fields": {
+              "provider": {
+                "type": "string",
+                "required": false,
+                "description": "APM or payment provider identifier",
+                "maxLength": 32,
+                "example": "PROVIDER"
+              },
+              "type": {
+                "type": "string",
+                "required": false,
+                "description": "Provider-specific payment type",
+                "maxLength": 32,
+                "example": "PROVIDER_TYPE"
+              },
+              "paymentSource": {
+                "type": "object",
+                "required": false,
+                "description": "Source of the payment instrument",
+                "fields": {
+                  "sourceType": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Discriminator for payment source type",
+                    "maxLength": 256,
+                    "example": "PaymentCard"
+                  },
+                  "walletType": {
+                    "type": "string",
+                    "required": false,
+                    "description": "Wallet provider when sourceType is a wallet",
+                    "maxLength": 256,
+                    "example": "APPLE_PAY"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "checkoutInteractions": {
+        "description": "Controls the checkout interaction flow including redirects, QR codes, and return URLs. Critical for APM redirect-based flows.",
+        "fields": {
+          "channel": {
+            "type": "string",
+            "required": false,
+            "description": "Interaction channel",
+            "maxLength": 32,
+            "example": "WEB"
+          },
+          "actions": {
+            "type": "object",
+            "required": false,
+            "description": "Actions the consumer must take to complete payment",
+            "fields": {
+              "type": {
+                "type": "string",
+                "required": false,
+                "description": "Type of action required",
+                "maxLength": 32,
+                "example": "WEB_REDIRECTION"
+              },
+              "url": {
+                "type": "string",
+                "required": false,
+                "description": "URL for redirect-based actions",
+                "maxLength": 2048
+              },
+              "code": {
+                "type": "string",
+                "required": false,
+                "description": "QR code or one-time code for the consumer",
+                "maxLength": 100,
+                "example": "ABCD1234"
+              }
+            }
+          },
+          "customerConfirmation": {
+            "type": "string",
+            "required": false,
+            "description": "Customer confirmation mode",
+            "maxLength": 32,
+            "example": "REVIEW_AND_PAY"
+          },
+          "paymentInitiator": {
+            "type": "string",
+            "required": false,
+            "description": "Entity that initiated the payment",
+            "maxLength": 32,
+            "example": "MERCHANT"
+          },
+          "returnUrls": {
+            "type": "object",
+            "required": false,
+            "description": "URLs for post-redirect return handling",
+            "fields": {
+              "successUrl": {
+                "type": "string",
+                "required": false,
+                "description": "URL to redirect consumer on successful payment",
+                "maxLength": 2048
+              },
+              "cancelUrl": {
+                "type": "string",
+                "required": false,
+                "description": "URL to redirect consumer on cancelled payment",
+                "maxLength": 2048
+              }
+            }
+          }
+        }
+      },
+      "merchantDetails": {
+        "description": "Merchant identification and configuration details",
+        "fields": {
+          "tokenType": {
+            "type": "string",
+            "required": false,
+            "description": "Token type for tokenization",
+            "maxLength": 64,
+            "example": "TRANSARMOR"
+          },
+          "storeId": {
+            "type": "string",
+            "required": false,
+            "description": "Store identifier",
+            "maxLength": 1024
+          },
+          "terminalId": {
+            "type": "string",
+            "required": false,
+            "description": "Terminal identifier",
+            "maxLength": 1024
+          },
+          "merchantId": {
+            "type": "string",
+            "required": false,
+            "description": "Merchant identifier",
+            "maxLength": 1024
+          },
+          "taxId": {
+            "type": "string",
+            "required": false,
+            "description": "Merchant tax identification number",
+            "maxLength": 15
+          },
+          "vatRegistrationNumber": {
+            "type": "string",
+            "required": false,
+            "description": "VAT registration number",
+            "maxLength": 64
+          },
+          "siteTypeIndicator": {
+            "type": "string",
+            "required": false,
+            "description": "Type of merchant site",
+            "maxLength": 64,
+            "example": "COMMERCIAL"
+          },
+          "dbaName": {
+            "type": "string",
+            "required": false,
+            "description": "Doing Business As name",
+            "maxLength": 1024
+          },
+          "promotionCode": {
+            "type": "string",
+            "required": false,
+            "description": "Promotion or campaign code",
+            "maxLength": 1024
+          },
+          "terminalLaneNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Terminal lane number for multi-lane environments",
+            "maxLength": 16
+          },
+          "hcoPageId": {
+            "type": "string",
+            "required": false,
+            "description": "Hosted Checkout page identifier",
+            "maxLength": 128
+          },
+          "useCase": {
+            "type": "string",
+            "required": false,
+            "description": "Use case identifier for the transaction",
+            "maxLength": 40
+          },
+          "merchantPartner": {
+            "type": "object",
+            "required": false,
+            "description": "Partner or integrator details associated with the merchant",
+            "fields": {
+              "id": {
+                "type": "string",
+                "required": false,
+                "description": "Partner identifier",
+                "maxLength": 128
+              },
+              "legacyTppId": {
+                "type": "string",
+                "required": false,
+                "description": "Legacy third-party processor identifier",
+                "maxLength": 6
+              },
+              "type": {
+                "type": "string",
+                "required": false,
+                "description": "Partner type",
+                "maxLength": 32,
+                "example": "PLUGIN"
+              },
+              "name": {
+                "type": "string",
+                "required": false,
+                "description": "Partner name",
+                "maxLength": 64
+              },
+              "productName": {
+                "type": "string",
+                "required": false,
+                "description": "Partner product name",
+                "maxLength": 64
+              },
+              "versionNumber": {
+                "type": "string",
+                "required": false,
+                "description": "Partner integration version",
+                "maxLength": 32
+              },
+              "integrator": {
+                "type": "string",
+                "required": false,
+                "description": "Integrator identifier",
+                "maxLength": 64
+              },
+              "merchantSubscriptionId": {
+                "type": "string",
+                "required": false,
+                "description": "Merchant subscription identifier with partner",
+                "maxLength": 128
+              },
+              "accountId": {
+                "type": "string",
+                "required": false,
+                "description": "Partner account identifier",
+                "maxLength": 32
+              }
+            }
+          }
+        }
+      },
+      "transactionDetails": {
+        "description": "Detailed transaction parameters including capture flags, tokenization, and device fingerprinting",
+        "fields": {
+          "approvalCode": {
+            "type": "string",
+            "required": false,
+            "description": "Authorization approval code"
+          },
+          "captureFlag": {
+            "type": "boolean",
+            "required": false,
+            "description": "false for authorization only, true for immediate capture"
+          },
+          "transactionCaptureType": {
+            "type": "string",
+            "required": false,
+            "description": "Capture type indicator",
+            "maxLength": 64,
+            "example": "TCS"
+          },
+          "merchantTransactionId": {
+            "type": "string",
+            "required": false,
+            "description": "Merchant-assigned transaction identifier",
+            "maxLength": 128
+          },
+          "merchantOrderId": {
+            "type": "string",
+            "required": false,
+            "description": "Merchant-assigned order identifier",
+            "maxLength": 128
+          },
+          "merchantInvoiceNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Merchant-assigned invoice number",
+            "maxLength": 128
+          },
+          "authorizationTypeIndicator": {
+            "type": "string",
+            "required": false,
+            "description": "Type of authorization",
+            "example": "REAUTH"
+          },
+          "deviceFingerprint": {
+            "type": "array",
+            "required": false,
+            "description": "Device fingerprint data for fraud detection",
+            "items": {
+              "fields": {
+                "provider": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Fingerprint provider"
+                },
+                "dataCapture": {
+                  "type": "object",
+                  "required": false,
+                  "description": "Captured data details",
+                  "fields": {
+                    "captureTime": {
+                      "type": "string",
+                      "required": false,
+                      "description": "Timestamp of data capture"
+                    },
+                    "dataEventId": {
+                      "type": "string",
+                      "required": false,
+                      "description": "Event identifier for capture"
+                    },
+                    "rawData": {
+                      "type": "string",
+                      "required": false,
+                      "description": "Raw fingerprint data"
+                    }
+                  }
+                },
+                "dataStatic": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Static device data"
+                },
+                "dataDynamic": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Dynamic device data"
+                }
+              }
+            }
+          },
+          "reversalReasonCode": {
+            "type": "string",
+            "required": false,
+            "description": "Reason code for reversal",
+            "maxLength": 22,
+            "example": "VOID"
+          },
+          "physicalGoodsIndicator": {
+            "type": "boolean",
+            "required": false,
+            "description": "Indicates whether physical goods are involved"
+          },
+          "authorizationSequence": {
+            "type": "string",
+            "required": false,
+            "description": "Authorization sequence control",
+            "maxLength": 27,
+            "example": "CANCEL_BEFORE_AUTHORIZATION"
+          },
+          "createToken": {
+            "type": "boolean",
+            "required": false,
+            "description": "Request token creation for the payment method"
+          },
+          "tokenProvider": {
+            "type": "string",
+            "required": false,
+            "description": "Token provider for tokenization",
+            "maxLength": 256,
+            "example": "TRANSARMOR"
+          },
+          "tokenNotificationUrl": {
+            "type": "string",
+            "required": false,
+            "description": "Webhook URL for token notifications",
+            "maxLength": 2048
+          },
+          "clientRequestId": {
+            "type": "string",
+            "required": false,
+            "description": "Client-assigned request identifier",
+            "maxLength": 1024
+          },
+          "duplicateTransactionCheckingIndicator": {
+            "type": "boolean",
+            "required": false,
+            "description": "Enable duplicate transaction checking"
+          },
+          "retrievalReferenceNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Retrieval reference number",
+            "maxLength": 12
+          },
+          "authentication3DS": {
+            "type": "boolean",
+            "required": false,
+            "description": "Indicates 3-D Secure authentication was performed"
+          },
+          "processingCode": {
+            "type": "string",
+            "required": false,
+            "description": "Transaction processing code",
+            "maxLength": 6
+          },
+          "transactionCutTimeStamp": {
+            "type": "string",
+            "required": false,
+            "description": "Transaction cut-off timestamp",
+            "format": "date-time"
+          },
+          "operationType": {
+            "type": "string",
+            "required": false,
+            "description": "Operation type for the transaction",
+            "maxLength": 50,
+            "example": "ACTIVATE"
+          },
+          "settlementDate": {
+            "type": "string",
+            "required": false,
+            "description": "Settlement date",
+            "format": "date"
+          },
+          "balanceInquiry": {
+            "type": "boolean",
+            "required": false,
+            "description": "Request balance inquiry"
+          },
+          "accountVerification": {
+            "type": "boolean",
+            "required": false,
+            "description": "Request account verification"
+          },
+          "binVerification": {
+            "type": "string",
+            "required": false,
+            "description": "BIN verification mode",
+            "maxLength": 30
+          },
+          "partialApproval": {
+            "type": "boolean",
+            "required": false,
+            "description": "Allow partial approval of the transaction amount"
+          },
+          "receiptEmail": {
+            "type": "string",
+            "required": false,
+            "description": "Email address for receipt delivery",
+            "maxLength": 256
+          },
+          "paymentDescription": {
+            "type": "string",
+            "required": false,
+            "description": "Description of the payment",
+            "maxLength": 1024
+          },
+          "partiallyApprovedTransactionAmount": {
+            "type": "number",
+            "required": false,
+            "description": "Partially approved transaction amount"
+          },
+          "splitTenderId": {
+            "type": "string",
+            "required": false,
+            "description": "Identifier for split tender transactions",
+            "maxLength": 1024
+          },
+          "fleetType": {
+            "type": "string",
+            "required": false,
+            "description": "Fleet card type",
+            "maxLength": 20
+          },
+          "registrationType": {
+            "type": "string",
+            "required": false,
+            "description": "Registration type",
+            "maxLength": 16
+          },
+          "retailerIndicator": {
+            "type": "string",
+            "required": false,
+            "description": "Retailer indicator",
+            "maxLength": 20
+          }
+        }
+      },
+      "transactionProcessingDetails": {
+        "description": "Processing metadata assigned by the gateway for transaction tracking",
+        "fields": {
+          "orderId": {
+            "type": "string",
+            "required": false,
+            "description": "Gateway-assigned order identifier",
+            "maxLength": 40
+          },
+          "transactionTimestamp": {
+            "type": "string",
+            "required": false,
+            "description": "Timestamp of transaction processing",
+            "format": "date-time"
+          },
+          "apiTraceId": {
+            "type": "string",
+            "required": false,
+            "description": "API trace identifier for debugging",
+            "maxLength": 32,
+            "format": "pattern:^[a-f0-9]{32}$"
+          },
+          "clientRequestId": {
+            "type": "string",
+            "required": false,
+            "description": "Client-assigned request identifier",
+            "maxLength": 1024
+          },
+          "transactionId": {
+            "type": "string",
+            "required": false,
+            "description": "Gateway-assigned transaction identifier",
+            "maxLength": 40
+          },
+          "apiKey": {
+            "type": "string",
+            "required": false,
+            "description": "API key used for the request",
+            "maxLength": 64
+          }
+        }
+      },
+      "referenceTransactionDetails": {
+        "description": "References to prior transactions for follow-on operations such as captures, voids, and refunds",
+        "fields": {
+          "referenceTransactionId": {
+            "type": "string",
+            "required": false,
+            "description": "Reference to a prior gateway transaction ID",
+            "maxLength": 40
+          },
+          "referenceMerchantTransactionId": {
+            "type": "string",
+            "required": false,
+            "description": "Reference to a prior merchant transaction ID",
+            "maxLength": 128
+          },
+          "referenceMerchantOrderId": {
+            "type": "string",
+            "required": false,
+            "description": "Reference to a prior merchant order ID",
+            "maxLength": 128
+          },
+          "referenceOrderId": {
+            "type": "string",
+            "required": false,
+            "description": "Reference to a prior gateway order ID",
+            "maxLength": 128
+          },
+          "referenceClientRequestId": {
+            "type": "string",
+            "required": false,
+            "description": "Reference to a prior client request ID",
+            "maxLength": 1024
+          }
+        }
+      },
+      "customer": {
+        "description": "Customer identification and personal details",
+        "fields": {
+          "merchantCustomerId": {
+            "type": "string",
+            "required": false,
+            "description": "Merchant-assigned customer identifier",
+            "maxLength": 1024
+          },
+          "providerCustomerId": {
+            "type": "string",
+            "required": false,
+            "description": "Provider-assigned customer identifier",
+            "maxLength": 1024
+          },
+          "firstName": {
+            "type": "string",
+            "required": false,
+            "description": "Customer first name",
+            "maxLength": 256
+          },
+          "lastName": {
+            "type": "string",
+            "required": false,
+            "description": "Customer last name",
+            "maxLength": 256
+          },
+          "email": {
+            "type": "string",
+            "required": false,
+            "description": "Customer email address",
+            "maxLength": 256
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "required": false,
+            "description": "Customer date of birth",
+            "maxLength": 10,
+            "format": "YYYY-MM-DD"
+          },
+          "countryOfBirth": {
+            "type": "string",
+            "required": false,
+            "description": "Country of birth (ISO 3166 alpha-3)",
+            "maxLength": 3
+          },
+          "phone": {
+            "type": "array",
+            "required": false,
+            "description": "Customer phone numbers",
+            "items": {
+              "fields": {
+                "countryCode": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Phone country code",
+                  "maxLength": 4
+                },
+                "phoneNumber": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Phone number",
+                  "maxLength": 15
+                },
+                "type": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Phone type (HOME, WORK, MOBILE, etc.)",
+                  "maxLength": 16
+                }
+              }
+            }
+          },
+          "driverLicenseNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Driver license number",
+            "maxLength": 256
+          },
+          "driverLicenseState": {
+            "type": "string",
+            "required": false,
+            "description": "Driver license issuing state",
+            "maxLength": 256
+          },
+          "idCardNumber": {
+            "type": "string",
+            "required": false,
+            "description": "National ID card number",
+            "maxLength": 256
+          },
+          "passportNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Passport number",
+            "maxLength": 256
+          },
+          "nationality": {
+            "type": "string",
+            "required": false,
+            "description": "Customer nationality (ISO 3166 alpha-3)",
+            "maxLength": 3
+          },
+          "ssn": {
+            "type": "string",
+            "required": false,
+            "description": "Social security number",
+            "maxLength": 9
+          },
+          "taxId": {
+            "type": "string",
+            "required": false,
+            "description": "Customer tax identifier"
+          },
+          "occupation": {
+            "type": "string",
+            "required": false,
+            "description": "Customer occupation",
+            "maxLength": 35
+          },
+          "registrationNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Customer registration number",
+            "maxLength": 256
+          },
+          "hostName": {
+            "type": "string",
+            "required": false,
+            "description": "Customer hostname or domain",
+            "maxLength": 1024
+          },
+          "driverID": {
+            "type": "string",
+            "required": false,
+            "description": "Fleet driver identifier",
+            "maxLength": 256
+          },
+          "workOrderNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Work order number",
+            "maxLength": 256
+          },
+          "additionalData1": {
+            "type": "string",
+            "required": false,
+            "description": "Additional customer data field 1",
+            "maxLength": 256
+          },
+          "additionalData2": {
+            "type": "string",
+            "required": false,
+            "description": "Additional customer data field 2",
+            "maxLength": 256
+          },
+          "department": {
+            "type": "string",
+            "required": false,
+            "description": "Customer department",
+            "maxLength": 256
+          },
+          "jobId": {
+            "type": "string",
+            "required": false,
+            "description": "Job identifier",
+            "maxLength": 256
+          },
+          "accountCode": {
+            "type": "string",
+            "required": false,
+            "description": "Customer account code",
+            "maxLength": 64
+          },
+          "vehicle": {
+            "type": "object",
+            "required": false,
+            "description": "Fleet vehicle details",
+            "fields": {
+              "vehicleNumber": {
+                "type": "string",
+                "required": false,
+                "description": "Vehicle number"
+              },
+              "odometerReading": {
+                "type": "string",
+                "required": false,
+                "description": "Odometer reading"
+              },
+              "tripNumber": {
+                "type": "string",
+                "required": false,
+                "description": "Trip number"
+              },
+              "unitId": {
+                "type": "string",
+                "required": false,
+                "description": "Unit identifier"
+              },
+              "reeferHours": {
+                "type": "string",
+                "required": false,
+                "description": "Reefer hours"
+              },
+              "maintenanceId": {
+                "type": "string",
+                "required": false,
+                "description": "Maintenance identifier"
+              },
+              "trailerNumber": {
+                "type": "string",
+                "required": false,
+                "description": "Trailer number"
+              },
+              "hubometer": {
+                "type": "string",
+                "required": false,
+                "description": "Hubometer reading"
+              },
+              "vehicleLicenseNumber": {
+                "type": "string",
+                "required": false,
+                "description": "Vehicle license plate number"
+              },
+              "vehicleLicenseState": {
+                "type": "string",
+                "required": false,
+                "description": "Vehicle license issuing state"
+              },
+              "trailerLicenseNumber": {
+                "type": "string",
+                "required": false,
+                "description": "Trailer license plate number"
+              },
+              "trailerLicenseState": {
+                "type": "string",
+                "required": false,
+                "description": "Trailer license issuing state"
+              },
+              "trailerHub": {
+                "type": "string",
+                "required": false,
+                "description": "Trailer hub reading"
+              }
+            }
+          }
+        }
+      },
+      "customerAddress": {
+        "description": "Customer billing address",
+        "fields": {
+          "street": {
+            "type": "string",
+            "required": false,
+            "description": "Street address line",
+            "maxLength": 256
+          },
+          "houseNumberOrName": {
+            "type": "string",
+            "required": false,
+            "description": "House number or name",
+            "maxLength": 256
+          },
+          "recipientNameOrAddress": {
+            "type": "string",
+            "required": false,
+            "description": "Recipient name or secondary address line",
+            "maxLength": 256
+          },
+          "city": {
+            "type": "string",
+            "required": false,
+            "description": "City name",
+            "maxLength": 256
+          },
+          "stateOrProvince": {
+            "type": "string",
+            "required": false,
+            "description": "State or province",
+            "maxLength": 256
+          },
+          "postalCode": {
+            "type": "string",
+            "required": false,
+            "description": "Postal or ZIP code",
+            "maxLength": 20
+          },
+          "country": {
+            "type": "string",
+            "required": false,
+            "description": "Country code (ISO 3166)",
+            "maxLength": 256
+          },
+          "county": {
+            "type": "string",
+            "required": false,
+            "description": "County name",
+            "maxLength": 256
+          }
+        }
+      },
+      "amount": {
+        "description": "Transaction amount",
+        "fields": {
+          "total": {
+            "type": "number",
+            "required": false,
+            "description": "Total transaction amount as decimal",
+            "example": 13.5
+          },
+          "currency": {
+            "type": "string",
+            "required": false,
+            "description": "Currency code (ISO 4217)",
+            "maxLength": 3
+          }
+        }
+      },
+      "amountComponents": {
+        "description": "Itemized breakdown of the transaction amount including taxes, surcharges, and adjustments",
+        "fields": {
+          "unitPrice": {
+            "type": "number",
+            "required": false,
+            "description": "Unit price"
+          },
+          "subTotal": {
+            "type": "number",
+            "required": false,
+            "description": "Subtotal before adjustments"
+          },
+          "cashback": {
+            "type": "number",
+            "required": false,
+            "description": "Cashback amount"
+          },
+          "tip": {
+            "type": "number",
+            "required": false,
+            "description": "Tip amount"
+          },
+          "surcharge": {
+            "type": "number",
+            "required": false,
+            "description": "Surcharge amount"
+          },
+          "convenienceFee": {
+            "type": "number",
+            "required": false,
+            "description": "Convenience fee amount"
+          },
+          "shippingRate": {
+            "type": "number",
+            "required": false,
+            "description": "Shipping rate percentage"
+          },
+          "shippingAmount": {
+            "type": "number",
+            "required": false,
+            "description": "Shipping amount"
+          },
+          "freightAmount": {
+            "type": "number",
+            "required": false,
+            "description": "Freight amount"
+          },
+          "freightRate": {
+            "type": "number",
+            "required": false,
+            "description": "Freight rate percentage"
+          },
+          "priceAdjustments": {
+            "type": "array",
+            "required": false,
+            "description": "Price adjustments such as discounts or markups",
+            "items": {
+              "fields": {
+                "adjustmentType": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Type of adjustment"
+                },
+                "adjustmentDescription": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Description of the adjustment"
+                },
+                "adjustmentRate": {
+                  "type": "number",
+                  "required": false,
+                  "description": "Adjustment rate as percentage"
+                },
+                "adjustmentAmount": {
+                  "type": "number",
+                  "required": false,
+                  "description": "Adjustment amount"
+                }
+              }
+            }
+          },
+          "taxAmounts": {
+            "type": "array",
+            "required": false,
+            "description": "Tax breakdown",
+            "items": {
+              "fields": {
+                "taxType": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Type of tax"
+                },
+                "taxRate": {
+                  "type": "number",
+                  "required": false,
+                  "description": "Tax rate as percentage"
+                },
+                "taxAmount": {
+                  "type": "number",
+                  "required": false,
+                  "description": "Tax amount"
+                },
+                "taxExempt": {
+                  "type": "boolean",
+                  "required": false,
+                  "description": "Whether tax exempt"
+                }
+              }
+            }
+          },
+          "netAmount": {
+            "type": "number",
+            "required": false,
+            "description": "Net amount after adjustments"
+          },
+          "grossAmount": {
+            "type": "number",
+            "required": false,
+            "description": "Gross amount before adjustments"
+          }
+        }
+      },
+      "orderData": {
+        "description": "Order-level metadata including line items, dates, and service type",
+        "fields": {
+          "orderDate": {
+            "type": "string",
+            "required": false,
+            "description": "Date the order was placed",
+            "format": "date"
+          },
+          "itemCount": {
+            "type": "integer",
+            "required": false,
+            "description": "Number of items in the order"
+          },
+          "customerReferenceIdentifier": {
+            "type": "string",
+            "required": false,
+            "description": "Customer reference identifier",
+            "maxLength": 17
+          },
+          "preOrder": {
+            "type": "boolean",
+            "required": false,
+            "description": "Indicates a pre-order"
+          },
+          "preOrderDate": {
+            "type": "string",
+            "required": false,
+            "description": "Expected availability date for pre-order",
+            "format": "date"
+          },
+          "reOrder": {
+            "type": "boolean",
+            "required": false,
+            "description": "Indicates a re-order of previously purchased items"
+          },
+          "serviceType": {
+            "type": "string",
+            "required": false,
+            "description": "Service type for the order",
+            "maxLength": 64,
+            "example": "FULL_SERVE"
+          },
+          "goodsSoldCode": {
+            "type": "string",
+            "required": false,
+            "description": "Goods sold code",
+            "maxLength": 64
+          },
+          "giftcardCount": {
+            "type": "integer",
+            "required": false,
+            "description": "Number of gift cards in the order"
+          },
+          "orderDescription": {
+            "type": "string",
+            "required": false,
+            "description": "Description of the order",
+            "maxLength": 255
+          },
+          "giftCardAmount": {
+            "type": "object",
+            "required": false,
+            "description": "Gift card amount details",
+            "fields": {
+              "total": {
+                "type": "number",
+                "required": false,
+                "description": "Gift card total amount"
+              },
+              "currency": {
+                "type": "string",
+                "required": false,
+                "description": "Gift card currency (ISO 4217)",
+                "maxLength": 3
+              }
+            }
+          },
+          "supplierVatRegistrationNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Supplier VAT registration number",
+            "maxLength": 15
+          },
+          "insuranceClaimNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Insurance claim number",
+            "maxLength": 64
+          },
+          "itemDetails": {
+            "type": "array",
+            "required": false,
+            "description": "Line item details for the order",
+            "items": {
+              "fields": {
+                "itemNumber": {
+                  "type": "number",
+                  "required": false,
+                  "description": "Item sequence number"
+                },
+                "commodityCode": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Commodity code",
+                  "maxLength": 256
+                },
+                "paymentSystemProductCode": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Payment system product code",
+                  "maxLength": 4
+                },
+                "productUPC": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Universal Product Code",
+                  "maxLength": 12
+                },
+                "itemUrl": {
+                  "type": "string",
+                  "required": false,
+                  "description": "URL to the item",
+                  "maxLength": 512
+                },
+                "itemImageUrl": {
+                  "type": "string",
+                  "required": false,
+                  "description": "URL to the item image",
+                  "maxLength": 512
+                },
+                "itemName": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Item name"
+                },
+                "itemDescription": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Item description",
+                  "maxLength": 1024
+                },
+                "productSKU": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Product stock keeping unit",
+                  "maxLength": 64
+                },
+                "quantity": {
+                  "type": "number",
+                  "required": false,
+                  "description": "Item quantity"
+                },
+                "unitOfMeasurement": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Unit of measurement"
+                },
+                "amountComponents": {
+                  "type": "object",
+                  "required": false,
+                  "description": "Item-level amount breakdown (same structure as top-level amountComponents)",
+                  "$ref": "#/requestSchema/objects/amountComponents"
+                },
+                "taxAmounts": {
+                  "type": "array",
+                  "required": false,
+                  "description": "Item-level tax breakdown (same structure as amountComponents.taxAmounts)",
+                  "$ref": "#/requestSchema/objects/amountComponents/fields/taxAmounts"
+                },
+                "netAmount": {
+                  "type": "number",
+                  "required": false,
+                  "description": "Item net amount"
+                },
+                "grossAmount": {
+                  "type": "number",
+                  "required": false,
+                  "description": "Item gross amount"
+                },
+                "department": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Department",
+                  "maxLength": 256
+                },
+                "subDepartment": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Sub-department",
+                  "maxLength": 256
+                },
+                "departmentClass": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Department class",
+                  "maxLength": 256
+                },
+                "departmentSubClass": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Department sub-class",
+                  "maxLength": 256
+                },
+                "itemType": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Item type",
+                  "maxLength": 256
+                },
+                "itemSubType": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Item sub-type",
+                  "maxLength": 256
+                }
+              }
+            }
+          }
+        }
+      },
+      "shippingAddress": {
+        "description": "Shipping destination details",
+        "fields": {
+          "firstName": {
+            "type": "string",
+            "required": false,
+            "description": "Recipient first name",
+            "maxLength": 256
+          },
+          "lastName": {
+            "type": "string",
+            "required": false,
+            "description": "Recipient last name",
+            "maxLength": 256
+          },
+          "shippingMethod": {
+            "type": "string",
+            "required": false,
+            "description": "Shipping method",
+            "maxLength": 60
+          },
+          "shipToEmail": {
+            "type": "string",
+            "required": false,
+            "description": "Email for shipping notifications",
+            "maxLength": 256
+          },
+          "address": {
+            "type": "object",
+            "required": false,
+            "description": "Shipping address (same structure as customerAddress)",
+            "$ref": "#/requestSchema/objects/customerAddress"
+          }
+        }
+      },
+      "billingAddress": {
+        "description": "Billing address details",
+        "fields": {
+          "firstName": {
+            "type": "string",
+            "required": false,
+            "description": "Billing first name",
+            "maxLength": 256
+          },
+          "middleName": {
+            "type": "string",
+            "required": false,
+            "description": "Billing middle name",
+            "maxLength": 256
+          },
+          "lastName": {
+            "type": "string",
+            "required": false,
+            "description": "Billing last name",
+            "maxLength": 256
+          },
+          "address": {
+            "type": "object",
+            "required": false,
+            "description": "Billing address (same structure as customerAddress)",
+            "$ref": "#/requestSchema/objects/customerAddress"
+          },
+          "phone": {
+            "type": "array",
+            "required": false,
+            "description": "Billing phone numbers (same structure as customer.phone)",
+            "$ref": "#/requestSchema/objects/customer/fields/phone"
+          }
+        }
+      },
+      "dynamicDescriptors": {
+        "description": "Dynamic statement descriptor fields that appear on the consumer's statement",
+        "fields": {
+          "mcc": {
+            "type": "string",
+            "required": false,
+            "description": "Merchant Category Code",
+            "maxLength": 4
+          },
+          "merchantName": {
+            "type": "string",
+            "required": false,
+            "description": "Merchant name for statement descriptor",
+            "maxLength": 1024
+          },
+          "customerServiceNumber": {
+            "type": "string",
+            "required": false,
+            "description": "Customer service phone number",
+            "maxLength": 15
+          },
+          "customerServiceEmail": {
+            "type": "string",
+            "required": false,
+            "description": "Customer service email address",
+            "maxLength": 256
+          },
+          "customerServiceURL": {
+            "type": "string",
+            "required": false,
+            "description": "Customer service URL",
+            "maxLength": 256
+          },
+          "serviceEntitlement": {
+            "type": "string",
+            "required": false,
+            "description": "Service entitlement identifier",
+            "maxLength": 16
+          },
+          "address": {
+            "type": "object",
+            "required": false,
+            "description": "Descriptor address (same structure as customerAddress)",
+            "$ref": "#/requestSchema/objects/customerAddress"
+          }
+        }
+      },
+      "encryptionData": {
+        "description": "Point-to-point encryption (P2PE) data for encrypted payment instruments",
+        "fields": {
+          "encryptionType": {
+            "type": "string",
+            "required": false,
+            "description": "Encryption type",
+            "maxLength": 256
+          },
+          "encryptionTarget": {
+            "type": "string",
+            "required": false,
+            "description": "Target of encryption",
+            "maxLength": 256
+          },
+          "keyId": {
+            "type": "string",
+            "required": false,
+            "description": "Encryption key identifier",
+            "maxLength": 64
+          },
+          "encryptionBlock": {
+            "type": "string",
+            "required": false,
+            "description": "Encrypted data block",
+            "maxLength": 2000
+          },
+          "encryptionBlockFields": {
+            "type": "string",
+            "required": false,
+            "description": "Fields contained in the encryption block",
+            "maxLength": 256
+          },
+          "deviceType": {
+            "type": "string",
+            "required": false,
+            "description": "Encryption device type",
+            "maxLength": 256
+          },
+          "encryptedKey": {
+            "type": "string",
+            "required": false,
+            "description": "Encrypted key data",
+            "maxLength": 5000
+          }
+        }
+      },
+      "splitShipment": {
+        "description": "Split shipment details for multi-shipment orders",
+        "fields": {
+          "totalCount": {
+            "type": "integer",
+            "required": false,
+            "description": "Total number of shipments in the split"
+          },
+          "finalShipment": {
+            "type": "boolean",
+            "required": false,
+            "description": "Indicates this is the final shipment"
+          }
+        }
+      },
+      "subMerchantId": {
+        "type": "string",
+        "required": false,
+        "description": "Sub-merchant identifier for payment facilitator models",
+        "maxLength": 1024
+      },
+      "networkProgramId": {
+        "type": "string",
+        "required": false,
+        "description": "Network program identifier",
+        "maxLength": 20
+      }
+    }
+  },
+  "responseSchema": {
+    "objects": {
+      "gatewayResponse": {
+        "description": "Top-level gateway response containing transaction state and processing details",
+        "fields": {
+          "transactionType": {
+            "type": "string",
+            "required": false,
+            "description": "Type of transaction processed",
+            "maxLength": 256,
+            "example": "CHARGE"
+          },
+          "transactionState": {
+            "type": "string",
+            "required": false,
+            "description": "Current state of the transaction",
+            "maxLength": 256,
+            "example": "AUTHORIZED"
+          },
+          "transactionOrigin": {
+            "type": "string",
+            "required": false,
+            "description": "Origin channel of the transaction",
+            "maxLength": 4,
+            "example": "ECOM"
+          },
+          "transactionProcessingDetails": {
+            "type": "object",
+            "required": false,
+            "description": "Processing metadata for the transaction",
+            "fields": {
+              "orderId": {
+                "type": "string",
+                "required": false,
+                "description": "Gateway-assigned order identifier",
+                "maxLength": 40
+              },
+              "transactionTimestamp": {
+                "type": "string",
+                "required": false,
+                "description": "Timestamp of transaction processing",
+                "format": "date-time"
+              },
+              "apiTraceId": {
+                "type": "string",
+                "required": false,
+                "description": "API trace identifier for debugging",
+                "maxLength": 32
+              },
+              "clientRequestId": {
+                "type": "string",
+                "required": false,
+                "description": "Echoed client request identifier",
+                "maxLength": 1024
+              },
+              "transactionId": {
+                "type": "string",
+                "required": false,
+                "description": "Gateway-assigned transaction identifier",
+                "maxLength": 40
+              },
+              "apiKey": {
+                "type": "string",
+                "required": false,
+                "description": "API key used for the request",
+                "maxLength": 64
+              }
+            }
+          }
+        }
+      },
+      "order": {
+        "description": "Order details echoed in the response with additional provider-assigned identifiers",
+        "fields": {
+          "orderId": {
+            "type": "string",
+            "required": false,
+            "description": "Order identifier"
+          },
+          "intent": {
+            "type": "string",
+            "required": false,
+            "description": "Transaction intent"
+          },
+          "orderStatus": {
+            "type": "string",
+            "required": false,
+            "description": "Current order status",
+            "example": "PAYER_ACTION_REQUIRED"
+          },
+          "providerOrderId": {
+            "type": "string",
+            "required": false,
+            "description": "APM provider-assigned order identifier"
+          }
+        }
+      },
+      "paymentMethod": {
+        "description": "Payment method echoed in the response (same structure as request)",
+        "$ref": "#/requestSchema/objects/order/fields/paymentMethod"
+      },
+      "checkoutInteractions": {
+        "description": "Checkout interaction details echoed in the response including redirect URLs and action codes",
+        "$ref": "#/requestSchema/objects/checkoutInteractions"
+      },
+      "paymentReceipt": {
+        "description": "Payment receipt with approved amounts and processor response details",
+        "fields": {
+          "approvedAmount": {
+            "type": "object",
+            "required": false,
+            "description": "Approved transaction amount",
+            "fields": {
+              "total": {
+                "type": "number",
+                "required": false,
+                "description": "Approved total amount"
+              },
+              "currency": {
+                "type": "string",
+                "required": false,
+                "description": "Currency code (ISO 4217)"
+              }
+            }
+          },
+          "processorResponseDetails": {
+            "type": "object",
+            "required": false,
+            "description": "Processor response details",
+            "fields": {
+              "referenceNumber": {
+                "type": "string",
+                "required": false,
+                "description": "Processor reference number"
+              }
+            }
+          }
+        }
+      },
+      "merchantDetails": {
+        "description": "Merchant details echoed back in the response",
+        "$ref": "#/requestSchema/objects/merchantDetails"
+      }
+    }
+  }
+}

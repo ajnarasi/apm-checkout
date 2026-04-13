@@ -5,9 +5,10 @@ import path from 'path';
 import fetch from 'node-fetch';
 
 const app = express();
-const PORT = 3848;
+const PORT = process.env.PORT || 3848;
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'] }));
+app.use(cors());
 app.use(express.json());
 
 // ---------------------------------------------------------------------------
@@ -35,8 +36,8 @@ const KLARNA = {
 // ---------------------------------------------------------------------------
 // Paths
 // ---------------------------------------------------------------------------
-const OUTPUT_DIR = '/Users/ajnarasi/Documents/Work/Projects/APM/output';
-const SKILL_REF_DIR = '/Users/ajnarasi/.claude/skills/enable-apm/references';
+const OUTPUT_DIR = path.join(__dirname, '..', 'output');
+const SKILL_REF_DIR = path.join(__dirname, 'skill-references');
 const GOLDEN_DIR = path.join(SKILL_REF_DIR, 'golden-mappings');
 
 // ---------------------------------------------------------------------------
@@ -651,8 +652,23 @@ app.get('/api/health', (_req, res) => {
 // ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
+// Serve React build in production
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  // SPA fallback — Express 5 requires named params, not '*'
+  app.use((req, res, next) => {
+    if (!req.path.startsWith('/api') && req.method === 'GET') {
+      res.sendFile(path.join(distPath, 'index.html'));
+    } else {
+      next();
+    }
+  });
+}
+
 app.listen(PORT, () => {
-  console.log(`APM Dashboard API server running on http://localhost:${PORT}`);
-  console.log(`CORS enabled for http://localhost:5173`);
+  console.log(`APM Dashboard running on http://localhost:${PORT}`);
   console.log(`APMs loaded: ${APMS.length}`);
+  console.log(`Output dir: ${OUTPUT_DIR}`);
+  console.log(`Serving static: ${fs.existsSync(distPath)}`);
 });

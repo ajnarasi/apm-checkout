@@ -11,7 +11,7 @@ import AuthFlowDiagram from './components/AuthFlowDiagram';
 import { APMS } from './data/apmList';
 import './App.css';
 
-const API = 'http://localhost:3848/api';
+const API = window.location.hostname === 'localhost' ? 'http://localhost:3848/api' : '/api';
 
 function App() {
   const [activePage, setActivePage] = useState('overview');

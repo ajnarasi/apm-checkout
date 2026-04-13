@@ -1,0 +1,386 @@
+{
+  "platform": "SnapPay",
+  "version": "3.0.9",
+  "description": "B2B payment platform by Fiserv with certified ERP integration for enterprise-size businesses. Integrates with popular ERP solutions and shopping cart solutions.",
+  "baseUrls": [
+    "https://snappaydirectapi-cert.fiserv.com/",
+    "https://demo1.cditechnology.com/SnapPay/REST/"
+  ],
+  "auth": {
+    "type": "basic + HMAC",
+    "headers": [
+      {
+        "name": "accountid",
+        "required": true,
+        "description": "The SnapPay account ID as supplied by SnapPay."
+      },
+      {
+        "name": "merchantid",
+        "required": false,
+        "description": "The Merchant ID. If provided, SnapPay will bypass the logic of identifying the merchant ID for the transaction. Required for transaction type T."
+      },
+      {
+        "name": "signature",
+        "required": true,
+        "description": "HMAC signature for request authentication."
+      }
+    ]
+  },
+  "endpoints": {
+    "getRequestID": {
+      "method": "POST",
+      "path": "/api/interop/v3/GetRequestID",
+      "description": "Prepares SnapPay with the information required to display the hosted payment page for user interaction to Authorize, Charge or Tokenize a credit card or ACH account.",
+      "requestSchema": "GetRequestIDRequest",
+      "tags": ["APIs with User Interaction"],
+      "notes": "Spike arrest: max 1000 calls/minute. Supports duplicate transaction checks."
+    },
+    "charge": {
+      "method": "POST",
+      "path": "/api/interop/v3/charge",
+      "description": "Performs a credit card charge or payment using a credit card token. Validates card, checks credit limit, and initiates fund transfer. Combines Authorize and Capture in a single call.",
+      "requestSchema": "ChargeRequest",
+      "responseSchema": "ChargeResponse",
+      "tags": ["APIs without User Interaction"],
+      "notes": "Supports single and multi-transaction payloads. Supports duplicate checks."
+    },
+    "refund": {
+      "method": "POST",
+      "path": "/api/interop/v3/refund",
+      "description": "Places a refund of a prior Capture or Charge on the credit card or ACH account used in the original transaction.",
+      "requestSchema": "RefundRequest",
+      "responseSchema": "RefundResponse",
+      "tags": ["APIs without User Interaction"]
+    }
+  },
+  "note_on_missing_endpoints": "SnapPay v3.0.9 does not expose standalone authorize or void endpoints. GetRequestID + hosted page handles authorization with user interaction. Charge combines auth+capture. Void is not available as a direct API in this version.",
+  "schemas": {
+    "GetRequestIDRequest": {
+      "type": "object",
+      "description": "Request to initialize a hosted payment page session for user-facing authorization, charge, or tokenization.",
+      "required": ["accountid", "companycode", "currencycode", "customerid", "userid", "transactiontype", "redirecturl", "transactionamount", "payments", "paymentmode", "stylecss"],
+      "fields": [
+        { "name": "accountid", "type": "number", "required": true, "description": "SnapPay account ID provided by SnapPay.", "example": 1000000001 },
+        { "name": "companycode", "type": "string", "required": true, "description": "SnapPay company code from the SnapPay portal or ERP system.", "example": "00200", "b2b_field": true },
+        { "name": "currencycode", "type": "string", "required": true, "description": "Currency code for the transaction.", "example": "USD" },
+        { "name": "customerid", "type": "string", "required": true, "description": "Customer ID from the ERP system or eCommerce application.", "example": "100" },
+        { "name": "supplierid", "type": "string", "required": false, "description": "Supplier ID from the ERP system.", "example": "100", "b2b_field": true },
+        { "name": "userid", "type": "string", "required": true, "description": "SnapPay user id or ERP system/external application user id.", "example": "first.last@company.com" },
+        { "name": "transactiontype", "type": "string", "required": true, "description": "Type of transaction. S = Sale, T = Single Field Tokenization.", "example": "S" },
+        { "name": "paymentmode", "type": "string", "required": true, "description": "CC for credit card, ACH for bank transfer.", "example": "CC" },
+        { "name": "transactionamount", "type": "number", "required": true, "description": "Transaction amount. For single-field tokenization, not required.", "example": 100.25 },
+        { "name": "language", "type": "string", "required": false, "description": "Language for Hosted Payment Page. en-US, es-MX, fr-CA.", "example": "en-US" },
+        { "name": "reference", "type": "string", "required": false, "description": "Optional. Specify ecom or upi based on use case.", "example": "ecom" },
+        { "name": "type", "type": "string", "required": false, "description": "C for Customer or S for Supplier.", "example": "C" },
+        { "name": "cvvrequired", "type": "string", "required": false, "description": "If CVV is mandatory. Y or N.", "example": "Y" },
+        { "name": "invoiceid", "type": "string", "required": false, "description": "Invoice ID from the ERP system.", "example": "4621657657" },
+        { "name": "orderid", "type": "string", "required": false, "description": "Order ID from the ERP or eCommerce system.", "example": "" },
+        { "name": "comments", "type": "string", "required": false, "description": "Additional comments from the ERP system.", "example": "test comments" },
+        { "name": "ordertype", "type": "string", "required": false, "description": "Order type from the ERP or eCommerce system.", "example": "SO", "b2b_field": true },
+        { "name": "branchplant", "type": "string", "required": false, "description": "Branch plant ID from the ERP system.", "example": "BR001", "b2b_field": true },
+        { "name": "purchaseorder", "type": "string", "required": false, "description": "Purchase order from the ERP system.", "example": "1243" },
+        { "name": "ecomind", "type": "string", "required": false, "description": "Transaction origin indicator. T=telephone/mail, R=recurring, E=e-commerce.", "example": "E" },
+        { "name": "cof", "type": "string", "required": false, "description": "Card on file. C=Customer Initiated, M=Merchant Initiated.", "example": "C" },
+        { "name": "cofscheduled", "type": "string", "required": false, "description": "Indicates if card on file is scheduled. Y or N.", "example": "N" },
+        { "name": "tokenid", "type": "string", "required": false, "description": "Payment Gateway Token ID.", "example": "9123123412341111" },
+        { "name": "redirecturl", "type": "string", "required": true, "description": "URL for redirection after a successful transaction.", "example": "https://xyz.com/orderconfirmation" },
+        { "name": "redirectionurlonerror", "type": "string", "required": false, "description": "URL for redirection after a failed transaction.", "example": "#" },
+        { "name": "duplicateredirecturl", "type": "string", "required": false, "description": "URL for redirection if the transaction is duplicated.", "example": "#" },
+        { "name": "cancelredirecturl", "type": "string", "required": false, "description": "Redirect URL on cancellation.", "example": "#" },
+        { "name": "parenturi", "type": "string", "required": false, "description": "Parent URL for IPG integration, eCommerce whitelisting.", "example": "https://abc.com" },
+        { "name": "payments", "type": "array<Payment>", "required": true, "description": "Array of payment modes with merchant and fee configuration." },
+        { "name": "user", "type": "User", "required": false, "description": "User details for the payment session." },
+        { "name": "customer", "type": "Customer", "required": false, "description": "Customer details." },
+        { "name": "supplier", "type": "Supplier", "required": false, "description": "Supplier details.", "b2b_field": true },
+        { "name": "level3", "type": "array<Level3LineItem>", "required": false, "description": "Order/invoice line item details from ERP or eCommerce.", "b2b_field": true },
+        { "name": "clxstream", "type": "array<CLXStream>", "required": false, "description": "CLX reporting transaction details.", "b2b_field": true },
+        { "name": "addcustomerinsnappay", "type": "string", "required": false, "description": "Add a customer in SnapPay. Expects customer object.", "example": "N" },
+        { "name": "adderpcustomerinsnappay", "type": "string", "required": false, "description": "Override account parameter AddERPCustomerInSnapPay. Y or N.", "example": "Y" },
+        { "name": "templateid", "type": "string", "required": false, "description": "Hosted Payment Page template ID.", "example": "102" },
+        { "name": "sendemailreceipts", "type": "string", "required": false, "description": "Email payment receipts to user. Y or N.", "example": "Y" }
+      ],
+      "ui_display_fields_excluded": [
+        "savepaymentmethod", "saveatsupplier", "displaypmsavedatsupplier", "saveatcustomer",
+        "displaycardssavedatcustomer", "openiniframe", "displaycardname", "displayaddress",
+        "displaytransactionamount", "displaycurrencycode", "displaycustomer", "displaypagetitle",
+        "forceusertoenteraddress", "useboltdevice", "devicehsn", "stylecss"
+      ]
+    },
+    "ChargeRequest": {
+      "type": "object",
+      "description": "Request to charge (auth+capture) a credit card or ACH account using a token. Supports single or multi-transaction payloads.",
+      "required": ["accountid", "companycode", "userid", "customerid", "currency", "transactions"],
+      "fields": [
+        { "name": "accountid", "type": "number", "required": true, "description": "SnapPay account ID.", "example": 1000000001 },
+        { "name": "userid", "type": "string", "required": true, "description": "User ID from external application or SnapPay portal.", "example": "user" },
+        { "name": "ecomind", "type": "string", "required": false, "description": "Transaction origin indicator. T=telephone/mail, R=recurring, E=e-commerce. Header-level, overridable at transaction level.", "example": "E" },
+        { "name": "cof", "type": "string", "required": false, "description": "Card on file. C=Customer Initiated, M=Merchant Initiated. Header-level, overridable at transaction level.", "example": "C" },
+        { "name": "cofscheduled", "type": "string", "required": false, "description": "Card on file scheduled. Y or N. Header-level.", "example": "N" },
+        { "name": "transactions", "type": "array<ChargeTransaction>", "required": true, "description": "Array of transaction details (single or multiple)." }
+      ]
+    },
+    "ChargeTransaction": {
+      "type": "object",
+      "description": "Individual transaction within a Charge request.",
+      "fields": [
+        { "name": "merchantid", "type": "string", "required": false, "description": "Payment Gateway Merchant ID.", "example": "XXXXXXXX" },
+        { "name": "currency", "type": "string", "required": false, "description": "Currency code for the transaction.", "example": "USD" },
+        { "name": "companycode", "type": "string", "required": false, "description": "Company code from SnapPay portal or ERP.", "example": "00200", "b2b_field": true },
+        { "name": "customerid", "type": "string", "required": false, "description": "Customer ID from ERP or eCommerce.", "example": "100" },
+        { "name": "supplierid", "type": "string", "required": false, "description": "Supplier ID from ERP.", "example": "100", "b2b_field": true },
+        { "name": "branchplant", "type": "string", "required": false, "description": "Branch plant ID from ERP.", "example": "BR001", "b2b_field": true },
+        { "name": "ordertype", "type": "string", "required": false, "description": "Order type from ERP or eCommerce.", "example": "SO", "b2b_field": true },
+        { "name": "orderid", "type": "string", "required": false, "description": "Order ID from ERP or eCommerce. Includes duplicate check.", "example": "123456" },
+        { "name": "orderdate", "type": "string", "required": false, "description": "Order date from ERP. Defaults to empty.", "example": "" },
+        { "name": "invoiceid", "type": "string", "required": false, "description": "Invoice ID from the ERP system.", "example": "123456" },
+        { "name": "sendemailreceipts", "type": "string", "required": false, "description": "Send email receipts. Y or N.", "example": "Y" },
+        { "name": "purchaseorder", "type": "string", "required": false, "description": "Purchase order from ERP or eCommerce.", "example": "1234" },
+        { "name": "shipfromzip", "type": "string", "required": false, "description": "Shipping from ZIP code.", "example": "60605" },
+        { "name": "shiptozip", "type": "string", "required": false, "description": "Shipping to ZIP code.", "example": "60603" },
+        { "name": "shiptocountry", "type": "string", "required": false, "description": "Shipping destination country (ISO 3166 Alpha-2).", "example": "US" },
+        { "name": "ecomind", "type": "string", "required": false, "description": "Transaction-level override. T, R, or E.", "example": "E" },
+        { "name": "cof", "type": "string", "required": false, "description": "Transaction-level override. C or M.", "example": "C" },
+        { "name": "cofscheduled", "type": "string", "required": false, "description": "Transaction-level override. Y or N.", "example": "N" },
+        { "name": "achseccode", "type": "string", "required": false, "description": "Standard Entry Code for ACH. PPD, CCD, WEB, TEL.", "example": "web" },
+        { "name": "achsecdescriptor", "type": "string", "required": false, "description": "10-char alphanumeric ACH transaction descriptor.", "example": "purchase" },
+        { "name": "ignoreaddress", "type": "string", "required": false, "description": "Skip address for card present. Y or N.", "example": "N" },
+        { "name": "paymentmethod", "type": "PaymentMethod", "required": false, "description": "Payment method details for CC or ACH." },
+        { "name": "level3", "type": "array<Level3LineItem>", "required": false, "description": "Order/invoice line item details.", "b2b_field": true },
+        { "name": "userfields", "type": "array<UserFields>", "required": false, "description": "Up to 10 user-defined fields." },
+        { "name": "clxstream", "type": "CLXStream", "required": false, "description": "CLX reporting transaction details.", "b2b_field": true }
+      ]
+    },
+    "RefundRequest": {
+      "type": "object",
+      "description": "Request to refund a prior Capture or Charge.",
+      "required": ["accountid"],
+      "fields": [
+        { "name": "accountid", "type": "number", "required": true, "description": "SnapPay account ID.", "example": 1000000001 },
+        { "name": "transactions", "type": "array<RefundTransaction>", "required": false, "description": "Array of refund transaction details." }
+      ]
+    },
+    "RefundTransaction": {
+      "type": "object",
+      "description": "Individual transaction within a Refund request.",
+      "required": ["currency", "companycode", "customerid", "userid", "referencetransactionid"],
+      "fields": [
+        { "name": "currency", "type": "string", "required": true, "description": "Currency code for the transaction.", "example": "USD" },
+        { "name": "companycode", "type": "string", "required": true, "description": "Company code from SnapPay portal or ERP.", "example": "00200", "b2b_field": true },
+        { "name": "customerid", "type": "string", "required": true, "description": "Customer ID from ERP or eCommerce.", "example": "100" },
+        { "name": "userid", "type": "string", "required": true, "description": "User ID from external application or SnapPay.", "example": "user" },
+        { "name": "referencetransactionid", "type": "string", "required": true, "description": "Unique ID of the original transaction to be refunded.", "example": "123123123" },
+        { "name": "transactionamount", "type": "number", "required": false, "description": "Refund amount. If omitted, full amount is refunded.", "example": 13 },
+        { "name": "orderid", "type": "string", "required": false, "description": "Order ID from ERP or eCommerce.", "example": "order1234" },
+        { "name": "invoiceid", "type": "string", "required": false, "description": "Invoice ID from ERP.", "example": "inv1234" },
+        { "name": "purchaseorder", "type": "string", "required": false, "description": "Purchase order from ERP.", "example": "1234" },
+        { "name": "reference", "type": "string", "required": false, "description": "Reference from ERP.", "example": "123456" },
+        { "name": "sendemailreceipts", "type": "string", "required": false, "description": "Send email receipts. Y or N.", "example": "Y" },
+        { "name": "clxstream", "type": "CLXStream", "required": false, "description": "CLX reporting details.", "b2b_field": true }
+      ]
+    },
+    "PaymentMethod": {
+      "type": "object",
+      "description": "Payment method details for CC or ACH transactions in Charge requests.",
+      "required": ["tokenid"],
+      "fields": [
+        { "name": "tokenid", "type": "string", "required": true, "description": "Payment Gateway Token ID or Account ID for CC or ACH.", "example": "9412345678912344" },
+        { "name": "transactionamount", "type": "string", "required": false, "description": "Transaction amount for the sale.", "example": "10" },
+        { "name": "cvv", "type": "string", "required": false, "description": "CVV for credit card transactions.", "example": "123" },
+        { "name": "customername", "type": "string", "required": false, "description": "Customer name from ERP, eCommerce, or cardholder.", "example": "John Smith" },
+        { "name": "addressline1", "type": "string", "required": false, "description": "Billing Address Line 1.", "example": "123 Main St" },
+        { "name": "addressline2", "type": "string", "required": false, "description": "Billing Address Line 2.", "example": "" },
+        { "name": "city", "type": "string", "required": false, "description": "Billing city.", "example": "Lombard" },
+        { "name": "state", "type": "string", "required": false, "description": "Billing state.", "example": "IL" },
+        { "name": "zip", "type": "string", "required": false, "description": "Billing ZIP code.", "example": "60148" },
+        { "name": "country", "type": "string", "required": false, "description": "Billing country (ISO 3166 Alpha-2).", "example": "US" },
+        { "name": "email", "type": "string", "required": false, "description": "Billing email.", "example": "john.smith@company.com" },
+        { "name": "phonenumber", "type": "string", "required": false, "description": "Billing phone number.", "example": null },
+        { "name": "type", "type": "string", "required": false, "description": "Payment method type (Visa, MasterCard, savings, checking, etc.).", "example": "VISA" },
+        { "name": "last4", "type": "string", "required": false, "description": "Last 4 digits of credit card.", "example": "2345" },
+        { "name": "routingnumber", "type": "string", "required": false, "description": "Bank routing number for ACH.", "example": "" },
+        { "name": "secureflag", "type": "string", "required": false, "description": "ECI flag from 3DS provider. 05=Fully authenticated, 06=Attempted.", "example": "05" },
+        { "name": "securevalue", "type": "string", "required": false, "description": "Base64-encoded CAVV from 3DS provider.", "example": "=asju1ljfl86bAAAAAACm9zU6aqY=" }
+      ]
+    },
+    "Payment": {
+      "type": "object",
+      "description": "Payment mode configuration within GetRequestID.",
+      "fields": [
+        { "name": "mode", "type": "string", "required": false, "description": "Payment method mode. CC or ACH.", "example": "CC" },
+        { "name": "merchantid", "type": "string", "required": false, "description": "Payment Gateway Merchant ID.", "example": "123456789" },
+        { "name": "feemerchantid", "type": "string", "required": false, "description": "Payment Gateway Merchant ID for fee transaction.", "example": "123456789" },
+        { "name": "feeorderid", "type": "string", "required": false, "description": "Fee Order ID.", "example": "123456789" },
+        { "name": "feeamount", "type": "string", "required": false, "description": "Fee amount.", "example": "2.00" },
+        { "name": "feetype", "type": "string", "required": false, "description": "Fee type (e.g., Service).", "example": "Service" },
+        { "name": "feevalue", "type": "string", "required": false, "description": "Fee value (percentage or flat amount).", "example": "3" },
+        { "name": "feeformat", "type": "string", "required": false, "description": "Fee format. Flat or Percentage.", "example": "Flat" },
+        { "name": "waivefee", "type": "string", "required": false, "description": "Waive fee. Y or N.", "example": "N" },
+        { "name": "feemessage", "type": "string", "required": false, "description": "Fee message to display.", "example": "" },
+        { "name": "achseccode", "type": "string", "required": false, "description": "Standard Entry Code for ACH. PPD, CCD, WEB, TEL.", "example": "web" },
+        { "name": "achsecdescriptor", "type": "string", "required": false, "description": "10-char ACH transaction descriptor.", "example": "purchase" },
+        { "name": "feeachseccode", "type": "string", "required": false, "description": "SEC code for fee ACH transaction.", "example": "web" },
+        { "name": "feeachsecdescriptor", "type": "string", "required": false, "description": "Descriptor for fee ACH transaction.", "example": "purchase" }
+      ]
+    },
+    "User": {
+      "type": "object",
+      "description": "User details for payment session.",
+      "fields": [
+        { "name": "userfirstname", "type": "string", "required": false, "description": "First name of the user.", "example": "Firstname" },
+        { "name": "userlastname", "type": "string", "required": false, "description": "Last name of the user.", "example": "Lastname" },
+        { "name": "useremail", "type": "string", "required": false, "description": "Email address of the user.", "example": "first.last@company.com" },
+        { "name": "forcepasswordreset", "type": "string", "required": false, "description": "Force password reset. Y or N.", "example": "N" },
+        { "name": "forcetermsandconditions", "type": "string", "required": false, "description": "Force terms and conditions acceptance. Y or N.", "example": "N" },
+        { "name": "devicegroup", "type": "string", "required": false, "description": "Device group identifier.", "example": "Device1" }
+      ]
+    },
+    "Customer": {
+      "type": "object",
+      "description": "Customer details from ERP or eCommerce.",
+      "fields": [
+        { "name": "customername", "type": "string", "required": false, "description": "Customer name.", "example": "custname" },
+        { "name": "addressline1", "type": "string", "required": false, "description": "Customer address line 1.", "example": "Street 100" },
+        { "name": "addressline2", "type": "string", "required": false, "description": "Customer address line 2.", "example": "" },
+        { "name": "city", "type": "string", "required": false, "description": "Customer city.", "example": "Chicago" },
+        { "name": "state", "type": "string", "required": false, "description": "Customer state.", "example": "IL" },
+        { "name": "zipcode", "type": "string", "required": false, "description": "Customer ZIP code.", "example": "60603" },
+        { "name": "country", "type": "string", "required": false, "description": "Customer country (ISO 3166 Alpha-2).", "example": "US" },
+        { "name": "phone", "type": "string", "required": false, "description": "Customer phone.", "example": "" },
+        { "name": "email", "type": "string", "required": false, "description": "Customer email.", "example": "first.last@company.com" },
+        { "name": "vatregistrationnumber", "type": "string", "required": false, "description": "Customer tax identification number.", "example": "", "b2b_field": true }
+      ]
+    },
+    "Supplier": {
+      "type": "object",
+      "description": "Supplier details. B2B/ERP-specific with no direct consumer equivalent.",
+      "b2b_field": true,
+      "fields": [
+        { "name": "suppliername", "type": "string", "required": false, "description": "Supplier name.", "example": "suppname" },
+        { "name": "addressline1", "type": "string", "required": false, "description": "Supplier address line 1.", "example": "Street 100" },
+        { "name": "addressline2", "type": "string", "required": false, "description": "Supplier address line 2.", "example": "" },
+        { "name": "city", "type": "string", "required": false, "description": "Supplier city.", "example": "Chicago" },
+        { "name": "state", "type": "string", "required": false, "description": "Supplier state.", "example": "IL" },
+        { "name": "zipcode", "type": "string", "required": false, "description": "Supplier ZIP code.", "example": "60603" },
+        { "name": "country", "type": "string", "required": false, "description": "Supplier country (ISO 3166 Alpha-2).", "example": "US" },
+        { "name": "phone", "type": "string", "required": false, "description": "Supplier phone.", "example": "" },
+        { "name": "email", "type": "string", "required": false, "description": "Supplier email.", "example": "first.last@company.com" },
+        { "name": "identificationtype", "type": "string", "required": false, "description": "ID type for Money Network payee creation. DATE_OF_BIRTH, MEMBER_ID, or SPECIAL_CODE.", "example": "MEMBER_ID" },
+        { "name": "identificationdata", "type": "string", "required": false, "description": "ID data based on identification type.", "example": "123456" },
+        { "name": "companyname", "type": "string", "required": false, "description": "Company name.", "example": "ABC Builders" },
+        { "name": "clientcompanyname", "type": "string", "required": false, "description": "Client company name.", "example": "XYZ" },
+        { "name": "internalmemo", "type": "string", "required": false, "description": "Internal memos.", "example": "" },
+        { "name": "comments", "type": "string", "required": false, "description": "Header comments.", "example": "test comments" },
+        { "name": "reason", "type": "string", "required": false, "description": "Reason field.", "example": "" },
+        { "name": "status", "type": "string", "required": false, "description": "API call status.", "example": "" }
+      ]
+    },
+    "Level3LineItem": {
+      "type": "object",
+      "description": "Order/invoice line item details from ERP or eCommerce. Used for Level 3 processing data.",
+      "b2b_field": true,
+      "fields": [
+        { "name": "linenumber", "type": "string", "required": false, "description": "Line item number.", "example": "1" },
+        { "name": "productcode", "type": "string", "required": false, "description": "Product code or item number.", "example": "ROS01" },
+        { "name": "taxrate", "type": "string", "required": false, "description": "Tax rate for the line item.", "example": "0.073" },
+        { "name": "quantity", "type": "string", "required": false, "description": "Quantity.", "example": "2" },
+        { "name": "itemdescription", "type": "string", "required": false, "description": "Description for the line item.", "example": "Mixed bouquet" },
+        { "name": "unitcost", "type": "string", "required": false, "description": "Unit cost.", "example": "30.75" },
+        { "name": "lineitemtotal", "type": "string", "required": false, "description": "Total amount for the line item.", "example": "65.96" },
+        { "name": "taxamount", "type": "string", "required": false, "description": "Tax amount.", "example": "4.46" },
+        { "name": "commoditycode", "type": "string", "required": false, "description": "Commodity code.", "example": "" },
+        { "name": "unitofmeasure", "type": "string", "required": false, "description": "Unit of measure.", "example": "EA" }
+      ]
+    },
+    "CLXStream": {
+      "type": "object",
+      "description": "CLX reporting transaction details. B2B/ERP-specific reporting structure.",
+      "b2b_field": true,
+      "fields": [
+        { "name": "transaction", "type": "CLXTransaction", "required": false, "description": "Primary transaction details for CLX reporting." },
+        { "name": "feetransaction", "type": "CLXTransaction", "required": false, "description": "Fee transaction details for CLX reporting." }
+      ]
+    },
+    "ChargeResponse": {
+      "type": "object",
+      "description": "Response from a Charge API call.",
+      "fields": [
+        { "name": "accountid", "type": "number", "required": false, "description": "SnapPay account ID associated with the transaction.", "example": 1000000001 },
+        { "name": "status", "type": "string", "required": false, "description": "Overall transaction status. Y=success, N=failed.", "example": "Y" },
+        { "name": "message", "type": "string", "required": false, "description": "Detailed status message.", "example": "Transaction successful." },
+        { "name": "transactions", "type": "TransactionResponse", "required": false, "description": "Transaction result details." }
+      ]
+    },
+    "RefundResponse": {
+      "type": "object",
+      "description": "Response from a Refund API call. Same structure as ChargeResponse.",
+      "fields": [
+        { "name": "accountid", "type": "number", "required": false, "description": "SnapPay account ID.", "example": 1000000001 },
+        { "name": "status", "type": "string", "required": false, "description": "Overall status. Y=success.", "example": "Y" },
+        { "name": "message", "type": "string", "required": false, "description": "Detailed status message.", "example": "Transaction successful." },
+        { "name": "transactions", "type": "TransactionResponse", "required": false, "description": "Transaction result details." }
+      ]
+    },
+    "TransactionResponse": {
+      "type": "object",
+      "description": "Transaction result details returned from Charge or Refund.",
+      "fields": [
+        { "name": "merchantid", "type": "string", "required": false, "description": "Payment Gateway Merchant ID.", "example": "12452589" },
+        { "name": "returncode", "type": "string", "required": false, "description": "Payment gateway return code. 0=success.", "example": "0" },
+        { "name": "returndescription", "type": "string", "required": false, "description": "Payment gateway return description.", "example": "Transaction successful" },
+        { "name": "procrespcode", "type": "string", "required": false, "description": "Platform and processor abbreviation.", "example": "RPCT" },
+        { "name": "pgtransactionid", "type": "string", "required": false, "description": "Payment gateway transaction ID generated by SnapPay.", "example": "260711140916" },
+        { "name": "paymenttransactionid", "type": "string", "required": false, "description": "Unique SnapPay transaction ID.", "example": "136243" },
+        { "name": "authorizationcode", "type": "string", "required": false, "description": "Authorization code from original auth request.", "example": "234AS5" },
+        { "name": "transactiondate", "type": "string", "required": false, "description": "Transaction date from SnapPay.", "example": "02/14/2021 03:00:28 PM" },
+        { "name": "transactionamount", "type": "string", "required": false, "description": "Transaction amount.", "example": "100" },
+        { "name": "currency", "type": "string", "required": false, "description": "Currency code.", "example": "USD" },
+        { "name": "scverification", "type": "string", "required": false, "description": "CVV verification response. M=Match, N=Invalid, P=Not Processed, S=Not Present, U=Not Certified, X=No Response.", "example": "P" },
+        { "name": "addressverification", "type": "string", "required": false, "description": "AVS response code for ZIP verification.", "example": "Z" },
+        { "name": "totaltransactionamount", "type": "string", "required": false, "description": "Total including fees.", "example": "100" },
+        { "name": "tokenid", "type": "string", "required": false, "description": "Payment Gateway Token ID used.", "example": "9XXXXXXXXXXXX1111" },
+        { "name": "paymentmethod", "type": "PaymentMethodResponse", "required": false, "description": "Payment method details in response." }
+      ]
+    },
+    "PaymentMethodResponse": {
+      "type": "object",
+      "description": "Payment method details returned in transaction responses.",
+      "fields": [
+        { "name": "type", "type": "string", "required": false, "description": "Card/account type. Visa, MasterCard, Discover, AMEX, Checking, Saving.", "example": "VISA" },
+        { "name": "tokenid", "type": "string", "required": false, "description": "Payment Gateway Token ID.", "example": "9XXXXXXXXXXXX1111" },
+        { "name": "paymentgateway", "type": "string", "required": false, "description": "Payment gateway used (e.g., CardConnect).", "example": "CardConnect" },
+        { "name": "expirationmonth", "type": "number", "required": false, "description": "Card expiration month.", "example": 9 },
+        { "name": "expirationyear", "type": "number", "required": false, "description": "Card expiration year.", "example": 2028 },
+        { "name": "firstname", "type": "string", "required": false, "description": "Cardholder first name.", "example": "First" },
+        { "name": "lastname", "type": "string", "required": false, "description": "Cardholder last name.", "example": "Last" },
+        { "name": "addressline1", "type": "string", "required": false, "description": "Billing address line 1.", "example": "123 Main St" },
+        { "name": "addressline2", "type": "string", "required": false, "description": "Billing address line 2.", "example": "" },
+        { "name": "city", "type": "string", "required": false, "description": "Billing city.", "example": "Lombard" },
+        { "name": "state", "type": "string", "required": false, "description": "Billing state.", "example": "IL" },
+        { "name": "zip", "type": "string", "required": false, "description": "Billing ZIP.", "example": "60148" },
+        { "name": "country", "type": "string", "required": false, "description": "Billing country.", "example": "US" },
+        { "name": "email", "type": "string", "required": false, "description": "Billing email.", "example": "first.last@company.com" },
+        { "name": "phonenumber", "type": "string", "required": false, "description": "Billing phone.", "example": null }
+      ]
+    }
+  },
+  "b2b_fields": {
+    "description": "Fields that are B2B/ERP-specific with no consumer equivalent. These should be flagged in mapping as optional or excluded for consumer payment flows.",
+    "fields": [
+      "companycode",
+      "branchplant",
+      "ordertype",
+      "supplier",
+      "supplier.suppliername",
+      "supplier.identificationtype",
+      "supplier.identificationdata",
+      "supplier.companyname",
+      "supplier.clientcompanyname",
+      "supplier.internalmemo",
+      "clxstream",
+      "level3",
+      "customer.vatregistrationnumber",
+      "adderpcustomerinsnappay",
+      "addcustomerinsnappay"
+    ]
+  }
+}

@@ -1,0 +1,605 @@
+{
+  "goldenMapping": {
+    "apmId": "KLARNA",
+    "apmDisplayName": "Klarna",
+    "pattern": "server-bnpl",
+    "patternVersion": "v1",
+    "source": "sandbox-validated-mapping",
+    "verifiedBy": "Sandbox API validation",
+    "verifiedDate": "2026-04-12",
+    "commerceHubVersion": "1.26.0302",
+    "providerApiVersion": "v1",
+    "category": "BNPL",
+    "regions": ["US", "CA", "UK", "DE", "FR", "NL", "BE", "AT", "CH", "ES", "IT", "PT", "SE", "NO", "DK", "FI"],
+    "currencies": ["USD", "CAD", "GBP", "EUR", "SEK", "NOK", "DKK", "CHF"],
+    "capabilities": ["auth", "capture", "partial-refund", "cancel"]
+  },
+
+  "endpoints": {
+    "sessionCreate": {
+      "chEndpoint": "POST /checkouts/v1/orders",
+      "providerEndpoint": "POST /payments/v1/sessions",
+      "description": "Create Klarna payment session — initializes checkout with order details and line items",
+      "authFormat": "HTTP Basic: Base64(username:password)",
+      "verified": true,
+      "sandboxValidated": "2026-04-12"
+    },
+    "auth": {
+      "chEndpoint": "POST /checkouts/v1/orders",
+      "providerEndpoint": "POST /payments/v1/authorizations/{auth_token}/order",
+      "description": "Place order after customer authorizes via Klarna widget"
+    },
+    "capture": {
+      "chEndpoint": "POST /checkouts/v1/orders",
+      "providerEndpoint": "POST /ordermanagement/v1/orders/{order_id}/captures",
+      "description": "Capture a previously authorized Klarna order"
+    },
+    "partialRefund": {
+      "chEndpoint": "POST /checkouts/v1/orders",
+      "providerEndpoint": "POST /ordermanagement/v1/orders/{order_id}/refunds",
+      "description": "Refund (full or partial) a captured Klarna order"
+    },
+    "cancel": {
+      "chEndpoint": "POST /checkouts/v1/orders",
+      "providerEndpoint": "POST /ordermanagement/v1/orders/{order_id}/cancel",
+      "description": "Cancel an authorized but uncaptured Klarna order"
+    }
+  },
+
+  "requestMappings": {
+    "sessionCreate": [
+      {
+        "id": "REQ_001",
+        "chField": "amount.total",
+        "chFieldType": "number",
+        "apmField": "order_amount",
+        "apmFieldType": "integer",
+        "transform": "DECIMAL_TO_CENTS",
+        "transformDetail": "Multiply by 100. CH uses decimal (50.00), Klarna uses minor units (5000)",
+        "tier": 1,
+        "required": true,
+        "description": "Total order amount in minor units"
+      },
+      {
+        "id": "REQ_002",
+        "chField": "amount.currency",
+        "chFieldType": "string",
+        "apmField": "purchase_currency",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": true,
+        "description": "ISO-4217 currency code"
+      },
+      {
+        "id": "REQ_003",
+        "chField": "customerAddress.country",
+        "chFieldType": "string",
+        "apmField": "purchase_country",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": true,
+        "description": "ISO-3166 country code — determines available Klarna products"
+      },
+      {
+        "id": "REQ_004",
+        "chField": "transactionDetails.merchantOrderId",
+        "chFieldType": "string",
+        "apmField": "merchant_reference1",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "description": "Merchant order reference — used for reconciliation"
+      },
+      {
+        "id": "REQ_005",
+        "chField": "transactionDetails.merchantTransactionId",
+        "chFieldType": "string",
+        "apmField": "merchant_reference2",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 2,
+        "required": false,
+        "description": "Secondary merchant reference"
+      },
+      {
+        "id": "REQ_006",
+        "chField": "amountComponents.taxAmounts[0].taxAmount",
+        "chFieldType": "number",
+        "apmField": "order_tax_amount",
+        "apmFieldType": "integer",
+        "transform": "DECIMAL_TO_CENTS",
+        "tier": 1,
+        "required": true,
+        "description": "Total tax amount for the order in minor units"
+      },
+      {
+        "id": "REQ_007",
+        "chField": "orderData.itemDetails[].itemName",
+        "chFieldType": "string",
+        "apmField": "order_lines[].name",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": true,
+        "bnplPromotion": "Promoted from Tier 2 — Klarna requires order_lines[]",
+        "description": "Line item name"
+      },
+      {
+        "id": "REQ_008",
+        "chField": "orderData.itemDetails[].quantity",
+        "chFieldType": "number",
+        "apmField": "order_lines[].quantity",
+        "apmFieldType": "integer",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": true,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Line item quantity"
+      },
+      {
+        "id": "REQ_009",
+        "chField": "orderData.itemDetails[].amountComponents.unitPrice",
+        "chFieldType": "number",
+        "apmField": "order_lines[].unit_price",
+        "apmFieldType": "integer",
+        "transform": "DECIMAL_TO_CENTS",
+        "tier": 1,
+        "required": true,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Unit price in minor units"
+      },
+      {
+        "id": "REQ_010",
+        "chField": "orderData.itemDetails[].grossAmount",
+        "chFieldType": "number",
+        "apmField": "order_lines[].total_amount",
+        "apmFieldType": "integer",
+        "transform": "DECIMAL_TO_CENTS",
+        "tier": 1,
+        "required": true,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Total line item amount (qty × unit_price) in minor units"
+      },
+      {
+        "id": "REQ_011",
+        "chField": "orderData.itemDetails[].taxAmounts[0].taxAmount",
+        "chFieldType": "number",
+        "apmField": "order_lines[].total_tax_amount",
+        "apmFieldType": "integer",
+        "transform": "DECIMAL_TO_CENTS",
+        "tier": 1,
+        "required": true,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Line item tax amount in minor units"
+      },
+      {
+        "id": "REQ_012",
+        "chField": "shippingAddress.firstName",
+        "chFieldType": "string",
+        "apmField": "shipping_address.given_name",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2 — Klarna uses for risk decisioning",
+        "description": "Shipping first name"
+      },
+      {
+        "id": "REQ_013",
+        "chField": "shippingAddress.lastName",
+        "chFieldType": "string",
+        "apmField": "shipping_address.family_name",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Shipping last name"
+      },
+      {
+        "id": "REQ_014",
+        "chField": "shippingAddress.address.street",
+        "chFieldType": "string",
+        "apmField": "shipping_address.street_address",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Shipping street address"
+      },
+      {
+        "id": "REQ_015",
+        "chField": "shippingAddress.address.city",
+        "chFieldType": "string",
+        "apmField": "shipping_address.city",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Shipping city"
+      },
+      {
+        "id": "REQ_016",
+        "chField": "shippingAddress.address.postalCode",
+        "chFieldType": "string",
+        "apmField": "shipping_address.postal_code",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Shipping postal code"
+      },
+      {
+        "id": "REQ_017",
+        "chField": "shippingAddress.address.country",
+        "chFieldType": "string",
+        "apmField": "shipping_address.country",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Shipping country (ISO-3166)"
+      },
+      {
+        "id": "REQ_018",
+        "chField": "customer.email",
+        "chFieldType": "string",
+        "apmField": "shipping_address.email",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2 — email is customer identity for BNPL",
+        "description": "Customer email for Klarna communication and identity"
+      },
+      {
+        "id": "REQ_019",
+        "chField": "customer.phone[0].phoneNumber",
+        "chFieldType": "string",
+        "apmField": "shipping_address.phone",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 2,
+        "required": false,
+        "description": "Customer phone number"
+      },
+      {
+        "id": "REQ_020",
+        "chField": "billingAddress.firstName",
+        "chFieldType": "string",
+        "apmField": "billing_address.given_name",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Billing first name"
+      },
+      {
+        "id": "REQ_021",
+        "chField": "billingAddress.lastName",
+        "chFieldType": "string",
+        "apmField": "billing_address.family_name",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Billing last name"
+      },
+      {
+        "id": "REQ_022",
+        "chField": "billingAddress.address.street",
+        "chFieldType": "string",
+        "apmField": "billing_address.street_address",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "bnplPromotion": "Promoted from Tier 2",
+        "description": "Billing street address"
+      },
+      {
+        "id": "REQ_023",
+        "chField": "billingAddress.address.city",
+        "chFieldType": "string",
+        "apmField": "billing_address.city",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "description": "Billing city"
+      },
+      {
+        "id": "REQ_024",
+        "chField": "billingAddress.address.postalCode",
+        "chFieldType": "string",
+        "apmField": "billing_address.postal_code",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "description": "Billing postal code"
+      },
+      {
+        "id": "REQ_025",
+        "chField": "billingAddress.address.country",
+        "chFieldType": "string",
+        "apmField": "billing_address.country",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "required": false,
+        "description": "Billing country"
+      }
+    ],
+    "capture": [
+      {
+        "id": "CAP_001",
+        "chField": "amount.total",
+        "chFieldType": "number",
+        "apmField": "captured_amount",
+        "apmFieldType": "integer",
+        "transform": "DECIMAL_TO_CENTS",
+        "tier": 1,
+        "required": true,
+        "description": "Capture amount in minor units"
+      },
+      {
+        "id": "CAP_002",
+        "chField": "transactionDetails.merchantOrderId",
+        "chFieldType": "string",
+        "apmField": "reference",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 2,
+        "required": false,
+        "description": "Capture reference for reconciliation"
+      },
+      {
+        "id": "CAP_003",
+        "chField": "orderData.itemDetails[]",
+        "chFieldType": "array",
+        "apmField": "order_lines[]",
+        "apmFieldType": "array",
+        "transform": "SAME_AS_SESSION",
+        "tier": 1,
+        "required": false,
+        "description": "Line items for partial capture (subset of original order)"
+      }
+    ],
+    "partialRefund": [
+      {
+        "id": "REF_001",
+        "chField": "amount.total",
+        "chFieldType": "number",
+        "apmField": "refunded_amount",
+        "apmFieldType": "integer",
+        "transform": "DECIMAL_TO_CENTS",
+        "tier": 1,
+        "required": true,
+        "description": "Refund amount in minor units"
+      },
+      {
+        "id": "REF_002",
+        "chField": "transactionDetails.merchantOrderId",
+        "chFieldType": "string",
+        "apmField": "reference",
+        "apmFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 2,
+        "required": false,
+        "description": "Refund reference"
+      },
+      {
+        "id": "REF_003",
+        "chField": "orderData.itemDetails[]",
+        "chFieldType": "array",
+        "apmField": "order_lines[]",
+        "apmFieldType": "array",
+        "transform": "SAME_AS_SESSION",
+        "tier": 2,
+        "required": false,
+        "description": "Line items being refunded (for partial refund)"
+      }
+    ]
+  },
+
+  "responseMappings": {
+    "sessionCreate": [
+      {
+        "id": "SRES_001",
+        "apmField": "session_id",
+        "apmFieldType": "string",
+        "chField": "order.providerOrderId",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "description": "Klarna session ID — serves as the provider order identifier"
+      },
+      {
+        "id": "SRES_002",
+        "apmField": "client_token",
+        "apmFieldType": "string",
+        "chField": "paymentMethod.paymentToken.tokenData",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "description": "Client token for Klarna JS SDK initialization"
+      },
+      {
+        "id": "SRES_003",
+        "apmField": "payment_method_categories[].identifier",
+        "apmFieldType": "string",
+        "chField": "paymentMethod.type",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 2,
+        "description": "Available Klarna payment method types (pay_later, pay_over_time, etc.)"
+      }
+    ],
+    "auth": [
+      {
+        "id": "ARES_001",
+        "apmField": "order_id",
+        "apmFieldType": "string",
+        "chField": "transactionProcessingDetails.transactionId",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "description": "Klarna order ID — used for capture, refund, cancel"
+      },
+      {
+        "id": "ARES_002",
+        "apmField": "fraud_status",
+        "apmFieldType": "string",
+        "chField": "gatewayResponse.transactionState",
+        "chFieldType": "string",
+        "transform": "ENUM_MAP",
+        "transformMap": {
+          "ACCEPTED": "AUTHORIZED",
+          "PENDING": "PENDING",
+          "REJECTED": "DECLINED"
+        },
+        "tier": 1,
+        "description": "Klarna fraud/risk decision mapped to CH transaction state"
+      },
+      {
+        "id": "ARES_003",
+        "apmField": "authorized_payment_method.type",
+        "apmFieldType": "string",
+        "chField": "paymentMethod.type",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 2,
+        "description": "Which Klarna product the customer selected"
+      }
+    ],
+    "capture": [
+      {
+        "id": "CRES_001",
+        "apmField": "capture_id",
+        "apmFieldType": "string",
+        "chField": "paymentReceipt.processorResponseDetails.referenceNumber",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "description": "Klarna capture ID"
+      },
+      {
+        "id": "CRES_002",
+        "apmField": "captured_amount",
+        "apmFieldType": "integer",
+        "chField": "paymentReceipt.approvedAmount.total",
+        "chFieldType": "number",
+        "transform": "CENTS_TO_DECIMAL",
+        "tier": 1,
+        "description": "Captured amount converted to decimal"
+      }
+    ],
+    "partialRefund": [
+      {
+        "id": "RRES_001",
+        "apmField": "refund_id",
+        "apmFieldType": "string",
+        "chField": "paymentReceipt.processorResponseDetails.referenceNumber",
+        "chFieldType": "string",
+        "transform": "PASS_THROUGH",
+        "tier": 1,
+        "description": "Klarna refund ID"
+      },
+      {
+        "id": "RRES_002",
+        "apmField": "refunded_amount",
+        "apmFieldType": "integer",
+        "chField": "paymentReceipt.approvedAmount.total",
+        "chFieldType": "number",
+        "transform": "CENTS_TO_DECIMAL",
+        "tier": 1,
+        "description": "Refunded amount converted to decimal"
+      }
+    ]
+  },
+
+  "authScheme": {
+    "type": "HTTP_BASIC",
+    "description": "Klarna uses HTTP Basic authentication with Base64(username:password)",
+    "credentialFields": {
+      "username": "API Username (UUID format)",
+      "password": "API Password (klarna_test_api_... format)"
+    },
+    "headerFormat": "Authorization: Basic {Base64(username:password)}"
+  },
+
+  "lifecycle": {
+    "supportedOperations": ["auth", "capture", "partial-refund", "cancel"],
+    "unsupportedOperations": ["void", "incremental-auth"],
+    "stateMapping": {
+      "SESSION_CREATED": "PAYER_ACTION_REQUIRED",
+      "AUTHORIZED": "AUTHORIZED",
+      "PART_CAPTURED": "PARTIALLY_CAPTURED",
+      "CAPTURED": "CAPTURED",
+      "REFUNDED": "REFUNDED",
+      "CANCELLED": "VOIDED",
+      "EXPIRED": "EXPIRED"
+    },
+    "flow": "SESSION_CREATE → CUSTOMER_AUTHORIZES (widget) → PLACE_ORDER → CAPTURE → REFUND/CANCEL"
+  },
+
+  "safetyChecks": {
+    "amountSymmetry": {
+      "requestTransform": "DECIMAL_TO_CENTS (×100)",
+      "responseTransform": "CENTS_TO_DECIMAL (÷100)",
+      "symmetric": true,
+      "status": "PASS"
+    },
+    "currencyPreservation": {
+      "requestField": "purchase_currency (pass-through)",
+      "status": "PASS"
+    },
+    "tier1Coverage": {
+      "allTier1FieldsMapped": true,
+      "status": "PASS"
+    },
+    "bnplLineItemCheck": {
+      "orderLinesRequired": true,
+      "orderLineFieldsCovered": ["name", "quantity", "unit_price", "total_amount", "total_tax_amount"],
+      "status": "PASS"
+    }
+  },
+
+  "sandboxFidelity": {
+    "knownDiscrepancies": [
+      {
+        "field": "order_lines[]",
+        "sandbox": "May accept requests without detailed line items",
+        "production": "Enforces order_lines[] with name, quantity, unit_price, total_amount, total_tax_amount as required",
+        "risk": "HIGH — BNPL mapping must always include line items"
+      },
+      {
+        "field": "shipping_address",
+        "sandbox": "Accepts without shipping address",
+        "production": "May require shipping address for physical goods orders",
+        "risk": "MEDIUM — conditional on product type"
+      }
+    ]
+  },
+
+  "bnplSpecificFields": {
+    "note": "These Tier 2 fields are promoted to Tier 1 for BNPL pattern",
+    "promotedFields": [
+      "orderData.itemDetails[]",
+      "shippingAddress",
+      "billingAddress",
+      "customer.email",
+      "amountComponents.taxAmounts"
+    ]
+  }
+}

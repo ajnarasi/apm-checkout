@@ -7,7 +7,9 @@
     "dev": "concurrently \"vite\" \"node server.js\"",
     "dev:client": "vite",
     "dev:server": "node server.js",
+    "start": "node server.js",
     "build": "vite build",
+    "render-build": "npm install && npm run build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

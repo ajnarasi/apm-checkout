@@ -837,7 +837,7 @@ async function initAdapter() {
   logEvent('INIT_STARTED', { apm: selectedApm.code });
 
   // Load real SDKs for supported APMs
-  if (selectedApm.code === 'klarna' && !window.Klarna) {
+  if (selectedApm.code === 'klarna' && !window.Klarna?.Payments) {
     await loadScript('https://x.klarnacdn.net/kp/lib/v1/api.js', 'Klarna Payments JS');
   }
   if (selectedApm.code === 'googlepay' && !window.google?.payments) {
@@ -916,20 +916,23 @@ async function renderAdapter() {
       promoContainer.innerHTML += '<div style="background:#fff;padding:8px;border-radius:4px;"><span id="sezzle-price" style="font-weight:700;color:#000;">$50.00</span></div>';
       container.appendChild(promoContainer);
       logEvent('PROMO_MESSAGE_RENDERED', { provider: 'sezzle', type: 'real_sdk', amount: 50 });
+    } else if (code === 'klarna') {
+      // Klarna OSM uses real SDK with playground client-id (no simulated badge fallback)
+      const klarnaPlacement = document.createElement('klarna-placement');
+      klarnaPlacement.setAttribute('data-key', 'credit-promotion-badge');
+      klarnaPlacement.setAttribute('data-locale', 'en-US');
+      klarnaPlacement.setAttribute('data-purchase-amount', '5000');
+      promoContainer.appendChild(klarnaPlacement);
+      container.appendChild(promoContainer);
+      logEvent('PROMO_MESSAGE_RENDERED', { provider: 'klarna', type: 'real_sdk', placement: 'credit-promotion-badge', amount: 5000 });
+      // NOTE: previously this branch did `return;` to skip the simulated-badge
+      // fallback below. That accidentally skipped the rest of renderAdapter()
+      // including the btn-auth enable on line 977 — so for Klarna ONLY the
+      // Authorize button stayed permanently disabled. Fixed by converting the
+      // early-return into a proper else-if so control flow always reaches the
+      // bottom of the function for every APM.
     } else {
-      // SIMULATED promo badges for Klarna, Afterpay, Affirm, Zip (require merchant signup)
-      // Klarna OSM uses real SDK with playground client-id
-      if (code === 'klarna') {
-        const klarnaPlacement = document.createElement('klarna-placement');
-        klarnaPlacement.setAttribute('data-key', 'credit-promotion-badge');
-        klarnaPlacement.setAttribute('data-locale', 'en-US');
-        klarnaPlacement.setAttribute('data-purchase-amount', '5000');
-        promoContainer.appendChild(klarnaPlacement);
-        container.appendChild(promoContainer);
-        logEvent('PROMO_MESSAGE_RENDERED', { provider: 'klarna', type: 'real_sdk', placement: 'credit-promotion-badge', amount: 5000 });
-        return; // skip simulated badge for Klarna
-      }
-
+      // SIMULATED promo badges for Afterpay, Affirm, Zip (require merchant signup for real messaging)
       const promoConfig = {
         afterpay: { text: '4 interest-free payments of $12.50', color: '#00D98B', logo: 'Afterpay', note: 'Requires Afterpay MPID for real messaging' },
         affirm: { text: 'As low as $12/mo with Affirm', color: '#4A4AF4', logo: 'Affirm', note: 'Requires Affirm public API key for real messaging' },
@@ -1021,10 +1024,37 @@ async function authorizeAdapter() {
 
     logEvent('SERVER_RESPONSE', { status: resp.status, endpoint });
 
-    const txId = data.transactionProcessingDetails?.transactionId || data.order?.providerOrderId || data.chargeId || data.id || data.checkout_id || data._raw?.token;
-    // Extract redirect URL from multiple response formats (CommerceHub, PPRO, Afterpay, PayPal)
+    // Surface backend errors (non-2xx) as PAYMENT_ERROR with a visible card
+    if (!resp.ok) {
+      logEvent('PAYMENT_ERROR', {
+        code: data.error || `HTTP_${resp.status}`,
+        status: resp.status,
+        message: data.hint || data.error || data.statusText || 'Request failed',
+        details: data.details || data,
+      });
+      const container = document.getElementById('payment-container');
+      if (container) {
+        container.innerHTML += `<div style="margin-top:12px;padding:16px;background:#2a0d0d;border:1px solid #f44336;border-radius:8px;">
+          <div style="font-size:0.85em;color:#f44336;font-weight:700;margin-bottom:8px;">❌ ${data.error || 'Payment Error'} (HTTP ${resp.status})</div>
+          ${data.hint ? `<div style="font-size:0.8em;color:#e0e0e0;line-height:1.5;margin-bottom:8px;">${data.hint}</div>` : ''}
+          ${data.requestId ? `<div style="font-size:0.7em;color:#888;">Request ID: <code>${data.requestId}</code></div>` : ''}
+          ${data.details ? `<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:0.75em;color:#888;">Details</summary><pre style="font-size:0.7em;color:#aaa;margin-top:6px;background:#1a1a1a;padding:8px;border-radius:4px;overflow-x:auto;">${JSON.stringify(data.details, null, 2)}</pre></details>` : ''}
+        </div>`;
+      }
+      return;
+    }
+
+    const txId = data.transactionProcessingDetails?.transactionId || data.order?.providerOrderId || data.chargeId || data.id || data.checkout_id || data._raw?.token || data._raw?.uid;
+    // Extract redirect URL from multiple response formats (CommerceHub, PPRO, Afterpay, PayPal, Zepto)
     const pproRedirect = data._raw?.authenticationMethods?.find?.(m => m.details?.requestUrl)?.details?.requestUrl;
-    const redirectUrl = data.checkoutInteractions?.actions?.url || pproRedirect || data._raw?.redirectCheckoutUrl || data.redirect_url || data._raw?.request?.redirectUrl || data.links?.find?.(l => l.rel === 'approve')?.href;
+    const redirectUrl = data.checkoutInteractions?.actions?.url
+      || pproRedirect
+      || data._raw?.redirectCheckoutUrl
+      || data.redirect_url
+      || data._raw?.request?.redirectUrl
+      || data._raw?.authorization_url       // Zepto PayTo agreement authorization URL
+      || data.authorization_url             // generic fallback
+      || data.links?.find?.(l => l.rel === 'approve')?.href;
     // Extract QR code from multiple formats (PPRO, CashApp, WeChat)
     const pproQR = data._raw?.authenticationMethods?.find?.(m => m.details?.codeImage || m.details?.codeType === 'QR')?.details?.codeImage;
     const qrCode = data.checkoutInteractions?.actions?.code || pproQR || data._raw?.code_url || data._raw?.request?.auth_flow_triggers?.qr_code_image_url;

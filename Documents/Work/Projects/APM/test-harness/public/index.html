@@ -272,6 +272,7 @@
   </div>
 
   <div class="sidebar-footer">
+    <a id="zepto-setup-link" href="/zepto-setup.html" target="_blank" style="display:none;font-size:11px;color:#92400e;text-decoration:none;font-weight:600;padding:6px 10px;background:#fef3c7;border-radius:6px;margin-bottom:10px;text-align:center;">&#9889; Setup Zepto Live Sandbox</a>
     <div class="sidebar-stats">
       <span class="stat-chip">55 APMs</span>
       <span class="stat-chip">6 Patterns</span>
@@ -279,6 +280,15 @@
     </div>
   </div>
 </div>
+
+<script>
+// Show "Setup Zepto" link if Zepto is configured but not yet bootstrapped
+fetch('/api/zepto/status').then(r => r.json()).then(s => {
+  if (s.configured && !s.ready) {
+    document.getElementById('zepto-setup-link').style.display = 'block';
+  }
+}).catch(() => {});
+</script>
 
 <!-- ============ MAIN CONTENT ============ -->
 <div class="main-content" id="main-content">
@@ -509,7 +519,8 @@
         <div class="guide-card" onclick="switchTab('sdk',document.querySelectorAll('.nav-btn')[4])"><div class="guide-title">SDK Code</div><div class="guide-desc">Browse the TypeScript source and compiled JavaScript. Core framework + all 55 adapter files with syntax highlighting.</div></div>
         <div class="guide-card" onclick="switchTab('requirements',document.querySelectorAll('.nav-btn')[5])"><div class="guide-title">Requirements Matrix</div><div class="guide-desc">329-row exhaustive requirements across 5 sections: callback support, SDK metadata, button styling, server handoff endpoints, and timeout budgets.</div></div>
         <div class="guide-card" onclick="switchTab('diagrams',document.querySelectorAll('.nav-btn')[6])"><div class="guide-title">Diagrams</div><div class="guide-desc">55 Mermaid sequence diagrams showing the full E2E payment flow per APM, including both format conversions.</div></div>
-        <div class="guide-card" style="grid-column:span 2;" onclick="switchTab('api',document.querySelectorAll('.nav-btn')[7])"><div class="guide-title">API Docs</div><div class="guide-desc">Swagger UI for all test harness endpoints. Klarna, CashApp, PPRO (live sandboxes), PayPal, Zepto, Apple Pay, Google Pay, and mock endpoints.</div></div>
+        <div class="guide-card" onclick="switchTab('api',document.querySelectorAll('.nav-btn')[7])"><div class="guide-title">API Docs</div><div class="guide-desc">Swagger UI for all test harness endpoints. Klarna, CashApp, PPRO (live sandboxes), PayPal, Zepto, Apple Pay, Google Pay, and mock endpoints.</div></div>
+        <div class="guide-card" style="border:2px solid #1677FF;background:linear-gradient(135deg,#eff6ff 0%,#ffffff 100%);" onclick="window.open('/alipayplus.html','_blank')"><div class="guide-title" style="color:#1677FF;">Alipay+ 4-Flow PM Demo &#8599;</div><div class="guide-desc">20-min walkthrough of all four Alipay+ payment products (Cashier, Auto Debit, Merchant-presented, User-presented) with live mock API calls, sequence diagrams, and a shared inspector.</div></div>
       </div>
     </div>
 

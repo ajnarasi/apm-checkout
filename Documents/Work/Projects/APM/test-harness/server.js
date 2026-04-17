@@ -21,10 +21,162 @@ const express = require('express');
 const fetch = require('node-fetch');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const app = express();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ============== ZEPTO OAuth (live sandbox) ==============
+const ZEPTO_CLIENT_ID = process.env.ZEPTO_CLIENT_ID;
+const ZEPTO_CLIENT_SECRET = process.env.ZEPTO_CLIENT_SECRET;
+const ZEPTO_REDIRECT_URI = process.env.ZEPTO_REDIRECT_URI || 'urn:ietf:wg:oauth:2.0:oob';
+const ZEPTO_OAUTH_BASE = 'https://go.sandbox.zeptopayments.com';
+const ZEPTO_API_BASE = 'https://api.sandbox.zeptopayments.com';
+const ZEPTO_TOKEN_FILE = path.join(__dirname, '.zepto-tokens.json');
+const ZEPTO_SCOPES = 'offline_access pay_to_agreements pay_to_payments payments contacts';
+let zeptoAccessToken = null;
+let zeptoAccessTokenExpiresAt = 0;
+let zeptoLastRefreshedAt = null;
+
+function loadZeptoRefreshToken() {
+  try {
+    if (fs.existsSync(ZEPTO_TOKEN_FILE)) {
+      const data = JSON.parse(fs.readFileSync(ZEPTO_TOKEN_FILE, 'utf-8'));
+      if (data && data.refresh_token) return data.refresh_token;
+    }
+  } catch (e) { console.error('[Zepto] Failed to read token file:', e.message); }
+  return process.env.ZEPTO_REFRESH_TOKEN || null;
+}
+
+function saveZeptoRefreshToken(refreshToken) {
+  try {
+    fs.writeFileSync(ZEPTO_TOKEN_FILE, JSON.stringify({ refresh_token: refreshToken, saved_at: new Date().toISOString() }, null, 2));
+    console.log('[Zepto] Refresh token persisted to .zepto-tokens.json');
+  } catch (e) { console.error('[Zepto] Failed to persist refresh token:', e.message); }
+}
+
+async function exchangeAuthCodeForTokens(code) {
+  if (!ZEPTO_CLIENT_ID || !ZEPTO_CLIENT_SECRET) throw new Error('ZEPTO_CLIENT_ID/ZEPTO_CLIENT_SECRET not configured in .env');
+  const params = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: ZEPTO_CLIENT_ID,
+    client_secret: ZEPTO_CLIENT_SECRET,
+    code: code,
+    redirect_uri: ZEPTO_REDIRECT_URI,
+  });
+  const resp = await fetch(`${ZEPTO_OAUTH_BASE}/oauth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  });
+  const data = await resp.json();
+  if (!resp.ok) {
+    throw new Error(`Zepto token exchange failed (${resp.status}): ${JSON.stringify(data)}`);
+  }
+  if (!data.access_token || !data.refresh_token) {
+    throw new Error('Zepto token response missing access_token or refresh_token: ' + JSON.stringify(data));
+  }
+  zeptoAccessToken = data.access_token;
+  zeptoAccessTokenExpiresAt = Date.now() + (data.expires_in || 7200) * 1000;
+  zeptoLastRefreshedAt = new Date().toISOString();
+  saveZeptoRefreshToken(data.refresh_token);
+  console.log('[Zepto] Bootstrap complete — access token valid for', data.expires_in, 'seconds');
+  return data;
+}
+
+async function refreshZeptoAccessToken() {
+  const refreshToken = loadZeptoRefreshToken();
+  if (!refreshToken) throw new Error('No refresh token available — run the one-time bootstrap flow at /zepto-setup.html');
+  if (!ZEPTO_CLIENT_ID || !ZEPTO_CLIENT_SECRET) throw new Error('ZEPTO_CLIENT_ID/ZEPTO_CLIENT_SECRET not configured');
+  const params = new URLSearchParams({
+    grant_type: 'refresh_token',
+    client_id: ZEPTO_CLIENT_ID,
+    client_secret: ZEPTO_CLIENT_SECRET,
+    refresh_token: refreshToken,
+  });
+  const resp = await fetch(`${ZEPTO_OAUTH_BASE}/oauth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  });
+  const data = await resp.json();
+  if (!resp.ok) {
+    throw new Error(`Zepto refresh failed (${resp.status}): ${JSON.stringify(data)}`);
+  }
+  if (!data.access_token) throw new Error('Zepto refresh response missing access_token');
+  zeptoAccessToken = data.access_token;
+  zeptoAccessTokenExpiresAt = Date.now() + (data.expires_in || 7200) * 1000;
+  zeptoLastRefreshedAt = new Date().toISOString();
+  // Rotate refresh token (Zepto refresh tokens are single-use)
+  if (data.refresh_token) saveZeptoRefreshToken(data.refresh_token);
+  console.log('[Zepto] Access token refreshed — valid for', data.expires_in, 'seconds');
+  return data.access_token;
+}
+
+async function getZeptoAccessToken() {
+  // 60-second safety margin
+  if (zeptoAccessToken && Date.now() < zeptoAccessTokenExpiresAt - 60000) {
+    return zeptoAccessToken;
+  }
+  if (!loadZeptoRefreshToken()) return null;
+  try {
+    return await refreshZeptoAccessToken();
+  } catch (e) {
+    console.error('[Zepto] Token refresh error:', e.message);
+    return null;
+  }
+}
+
+// Zepto setup status
+app.get('/api/zepto/status', (req, res) => {
+  const configured = !!(ZEPTO_CLIENT_ID && ZEPTO_CLIENT_SECRET);
+  const ready = configured && !!loadZeptoRefreshToken();
+  res.json({
+    configured,
+    ready,
+    lastRefreshedAt: zeptoLastRefreshedAt,
+    accessTokenValid: !!zeptoAccessToken && Date.now() < zeptoAccessTokenExpiresAt,
+  });
+});
+
+// Build authorization URL for one-time bootstrap
+app.get('/api/zepto/authorize', (req, res) => {
+  if (!ZEPTO_CLIENT_ID) {
+    return res.status(500).json({ error: 'ZEPTO_CLIENT_ID not configured in .env' });
+  }
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: ZEPTO_CLIENT_ID,
+    redirect_uri: ZEPTO_REDIRECT_URI,
+    scope: ZEPTO_SCOPES,
+  });
+  const authorizationUrl = `${ZEPTO_OAUTH_BASE}/oauth/authorize?${params.toString()}`;
+  res.json({
+    authorizationUrl,
+    ready: !!loadZeptoRefreshToken(),
+    instructions: 'Open this URL, log in, copy the code shown, then POST { code } to /api/zepto/bootstrap',
+  });
+});
+
+// Exchange authorization code for tokens (one-time bootstrap)
+app.post('/api/zepto/bootstrap', async (req, res) => {
+  const { code } = req.body || {};
+  if (!code || typeof code !== 'string' || !code.trim()) {
+    return res.status(400).json({ error: 'Missing or empty "code" in request body' });
+  }
+  try {
+    const data = await exchangeAuthCodeForTokens(code.trim());
+    res.json({
+      success: true,
+      message: 'Refresh token stored. Access tokens will auto-refresh every ~2 hours.',
+      expiresIn: data.expires_in,
+      scopes: data.scope,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // ============== CONFIG (sandbox credentials) ==============
 const KLARNA = {
@@ -60,43 +212,74 @@ function logTest(apm, step, status, details, requestData, responseData) {
 // ============== KLARNA ROUTES ==============
 
 // Step 1: Create payment session
+// Defensive ISO 3166-1 alpha-2 normalizer. Accepts any input, returns a valid
+// 2-uppercase-letter country code or a fallback. Fixes Klarna's "country must
+// be two uppercase or two lowercase letters" error when callers send empty /
+// 3-letter / mixed-case country values.
+function normalizeCountry(input, fallback = 'US') {
+  const v = String(input || '').trim().toUpperCase();
+  if (/^[A-Z]{2}$/.test(v)) return v;
+  // Map common 3-letter ISO 3166-1 alpha-3 and full names to alpha-2
+  const alpha3Map = {
+    USA: 'US', GBR: 'GB', DEU: 'DE', FRA: 'FR', ITA: 'IT', ESP: 'ES',
+    NLD: 'NL', BEL: 'BE', AUT: 'AT', CHE: 'CH', POL: 'PL', SWE: 'SE',
+    NOR: 'NO', DNK: 'DK', FIN: 'FI', BRA: 'BR', MEX: 'MX', AUS: 'AU',
+    CAN: 'CA', JPN: 'JP', IND: 'IN', CHN: 'CN', SGP: 'SG', HKG: 'HK',
+    KOR: 'KR', THA: 'TH', IDN: 'ID', PHL: 'PH', MYS: 'MY', VNM: 'VN',
+  };
+  if (alpha3Map[v]) return alpha3Map[v];
+  return fallback;
+}
+
 app.post('/api/klarna/session', async (req, res) => {
   try {
+    // Log inbound body for post-mortem diagnostics (country/format mismatches).
+    // Keep under 1000 chars so we don't flood the log buffer.
+    try {
+      console.log('[klarna] inbound', JSON.stringify(req.body).slice(0, 1000));
+    } catch {}
+
     const { amount, currency, items, shippingAddress, billingAddress, merchantReference } = req.body;
+
+    // Normalize country at the boundary so upstream Klarna never rejects with
+    // "Bad format: country must be two uppercase or two lowercase letters".
+    const shippingCountry = normalizeCountry(shippingAddress?.country, 'US');
+    const billingCountry = normalizeCountry(billingAddress?.country, shippingCountry);
+    const purchaseCountry = shippingCountry; // Klarna requires purchase_country = shipping.country
 
     // CH → Klarna field mapping (applying our generated mappings)
     const klarnaBody = {
-      purchase_country: shippingAddress?.country || 'US',
+      purchase_country: purchaseCountry,
       purchase_currency: currency || 'USD',
       locale: 'en-US',
       order_amount: Math.round(amount * 100),        // MULTIPLY_100: CH decimal → Klarna minor units
       order_tax_amount: Math.round((req.body.taxAmount || 0) * 100),
       order_lines: (items || []).map(item => ({
-        name: item.itemName,                          // itemName → name
-        quantity: item.quantity,                       // quantity → quantity
-        unit_price: Math.round(item.unitPrice * 100), // MULTIPLY_100
-        total_amount: Math.round(item.grossAmount * 100),
+        name: item.itemName || item.name || 'Item',
+        quantity: Math.max(1, parseInt(item.quantity || '1', 10)),
+        unit_price: Math.round((item.unitPrice || 0) * 100),
+        total_amount: Math.round((item.grossAmount || item.unitPrice || 0) * 100),
         total_tax_amount: Math.round((item.taxAmount || 0) * 100),
       })),
-      merchant_reference1: merchantReference,         // merchantOrderId → merchant_reference1
+      merchant_reference1: merchantReference || ('SDK-' + Date.now()),
       shipping_address: shippingAddress ? {
-        given_name: shippingAddress.firstName,         // firstName → given_name
-        family_name: shippingAddress.lastName,         // lastName → family_name
-        street_address: shippingAddress.street,        // street → street_address
-        city: shippingAddress.city,                    // city → city
-        postal_code: shippingAddress.postalCode,       // postalCode → postal_code
-        country: shippingAddress.country,              // country → country
-        email: shippingAddress.email,                  // email → email
-        phone: shippingAddress.phone                   // phone → phone
+        given_name: shippingAddress.firstName || 'Test',
+        family_name: shippingAddress.lastName || 'User',
+        street_address: shippingAddress.street || '123 Test St',
+        city: shippingAddress.city || 'San Francisco',
+        postal_code: shippingAddress.postalCode || '94107',
+        country: shippingCountry,
+        email: shippingAddress.email || 'test@example.com',
+        phone: shippingAddress.phone || '+14155550100',
       } : undefined,
       billing_address: billingAddress ? {
-        given_name: billingAddress.firstName,
-        family_name: billingAddress.lastName,
-        street_address: billingAddress.street,
-        city: billingAddress.city,
-        postal_code: billingAddress.postalCode,
-        country: billingAddress.country,
-        email: billingAddress.email
+        given_name: billingAddress.firstName || 'Test',
+        family_name: billingAddress.lastName || 'User',
+        street_address: billingAddress.street || '123 Test St',
+        city: billingAddress.city || 'San Francisco',
+        postal_code: billingAddress.postalCode || '94107',
+        country: billingCountry,
+        email: billingAddress.email || 'test@example.com',
       } : undefined
     };
 
@@ -390,21 +573,46 @@ const PPRO = {
 
 app.post('/api/ppro/charge', async (req, res) => {
   try {
+    try { console.log('[ppro] inbound', JSON.stringify(req.body).slice(0, 1000)); } catch {}
     const { amount, currency, customerName, customerEmail, country,
             paymentMethod, captureFlag, returnUrl, merchantOrderId } = req.body;
 
+    // Validate at the boundary so we return a clean 400 instead of a TypeError
+    // when the body is empty or paymentMethod is missing. (Previously crashed
+    // with "Cannot read properties of undefined (reading 'toUpperCase')" on
+    // line 590 when `paymentMethod` was undefined.)
+    const normPaymentMethod = String(paymentMethod || '').trim().toUpperCase();
+    if (!normPaymentMethod) {
+      return res.status(400).json({
+        success: false,
+        error: 'paymentMethod is required',
+        receivedBody: req.body || null,
+      });
+    }
+    if (typeof amount !== 'number' || !isFinite(amount) || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'amount must be a positive number',
+        receivedAmount: amount,
+      });
+    }
+
+    // Normalize country at the boundary. PPRO is strict about ISO 3166-1 alpha-2.
+    const normCountry = normalizeCountry(country, 'DE');
+    const normCurrency = String(currency || 'EUR').trim().toUpperCase().slice(0, 3);
+
     const pproBody = {
-      consumer: { name: customerName, email: customerEmail || 'test@example.com', country },
-      amount: { value: Math.round(amount * 100), currency },
-      paymentMethod: paymentMethod.toUpperCase(),
+      consumer: { name: customerName || 'Test User', email: customerEmail || 'test@example.com', country: normCountry },
+      amount: { value: Math.round(amount * 100), currency: normCurrency },
+      paymentMethod: normPaymentMethod,
       autoCapture: captureFlag !== false,
       authenticationSettings: [{
-        type: paymentMethod.toUpperCase() === 'PIX' ? 'SCAN_CODE' : 'REDIRECT',
-        settings: paymentMethod.toUpperCase() === 'PIX'
+        type: normPaymentMethod === 'PIX' ? 'SCAN_CODE' : 'REDIRECT',
+        settings: normPaymentMethod === 'PIX'
           ? { scanBy: new Date(Date.now() + 3600000).toISOString() }
           : { returnUrl: returnUrl || 'https://example.com/return' }
       }],
-      merchantPaymentChargeReference: merchantOrderId || `CH-${paymentMethod}-${Date.now()}`
+      merchantPaymentChargeReference: merchantOrderId || `CH-${normPaymentMethod}-${Date.now()}`
     };
 
     const resp = await fetch(`${PPRO.baseUrl}/v1/payment-charges`, {
@@ -424,7 +632,7 @@ app.post('/api/ppro/charge', async (req, res) => {
     const passed = resp.status === 200 || resp.status === 201;
 
     logTest('ppro', `charge-${paymentMethod}`, passed ? 'PASS' : 'FAIL',
-      `${paymentMethod} ${country}/${currency}: ${data.status || data.failureMessage}`,
+      `${paymentMethod} ${normCountry}/${normCurrency}: ${data.status || data.failureMessage}`,
       pproBody, data);
 
     res.json({
@@ -542,11 +750,188 @@ app.get('/api/alipayplus/inquiry/:id', async (req, res) => {
 
 app.post('/api/alipayplus/refund', async (req, res) => {
   const refundId = `AP_REF_${Date.now()}`;
-  res.json({
-    result: { resultStatus: 'S' },
+  const response = {
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Success' },
     refundId,
-    refundAmount: { value: req.body.amount || '1000', currency: req.body.currency || 'USD' }
-  });
+    refundRequestId: req.body.refundRequestId || `refundReq-${Date.now()}`,
+    refundAmount: { value: String(req.body.amount || '1000'), currency: req.body.currency || 'USD' },
+    refundTime: new Date().toISOString()
+  };
+  logTest('alipayplus', 'refund', 'PASS', `Refund: ${refundId}`, req.body, response);
+  res.json(response);
+});
+
+// ----- Product-demo routes (Cashier / Auto Debit / MPM / UPM / Common) -----
+// These mirror the official Alipay+ API list from the integration guide so the
+// PM team can see request/response shapes and endpoint names per flow.
+
+// CASHIER: step 1 — consultPayment (list wallets available for currency + region)
+app.post('/api/alipayplus/consultPayment', (req, res) => {
+  const { paymentAmount, settlementCurrency, region } = req.body || {};
+  const response = {
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Success' },
+    paymentOptions: [
+      { paymentMethodType: 'EWALLET_ALIPAYCN', paymentMethodName: 'Alipay', logoUrl: 'https://logo.alipay.com/alipay.png', supportCurrencies: ['CNY','USD','HKD'] },
+      { paymentMethodType: 'EWALLET_ALIPAYHK', paymentMethodName: 'AlipayHK', logoUrl: 'https://logo.alipay.com/alipayhk.png', supportCurrencies: ['HKD'] },
+      { paymentMethodType: 'EWALLET_DANA',     paymentMethodName: 'DANA',      logoUrl: 'https://logo.alipay.com/dana.png',   supportCurrencies: ['IDR'] },
+      { paymentMethodType: 'EWALLET_GCASH',    paymentMethodName: 'GCash',     logoUrl: 'https://logo.alipay.com/gcash.png',  supportCurrencies: ['PHP'] },
+      { paymentMethodType: 'EWALLET_TRUEMONEY',paymentMethodName: 'TrueMoney', logoUrl: 'https://logo.alipay.com/tng.png',    supportCurrencies: ['THB'] },
+      { paymentMethodType: 'EWALLET_KAKAOPAY', paymentMethodName: 'KakaoPay',  logoUrl: 'https://logo.alipay.com/kakao.png',  supportCurrencies: ['KRW'] },
+      { paymentMethodType: 'EWALLET_TNG',      paymentMethodName: 'Touch\u2019nGo', logoUrl: 'https://logo.alipay.com/tng.png', supportCurrencies: ['MYR'] },
+    ]
+  };
+  logTest('alipayplus', 'consultPayment', 'PASS', `region=${region||'SG'} currency=${settlementCurrency||'USD'} options=${response.paymentOptions.length}`, req.body, response);
+  res.json(response);
+});
+
+// AUTO DEBIT: step 2 — authorizations/prepare (get auth URL)
+app.post('/api/alipayplus/authorizations/prepare', (req, res) => {
+  const authState = `state_${Math.random().toString(36).slice(2, 10)}`;
+  const scopes = Array.isArray(req.body?.scopes) && req.body.scopes.length ? req.body.scopes : ['AGREEMENT_PAY','USER_LOGIN_ID'];
+  const response = {
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Success' },
+    authUrl: `https://auth.mpp.alipayplus.com/authorize?state=${authState}&scope=${scopes.join('%20')}&client_id=ACQP_MOCK`,
+    authState,
+    scopes
+  };
+  logTest('alipayplus', 'authorizations/prepare', 'PASS', `scopes=${scopes.join('|')}`, req.body, response);
+  res.json(response);
+});
+
+// AUTO DEBIT: step 3 — authorizations/applyToken (exchange authCode for accessToken)
+app.post('/api/alipayplus/authorizations/applyToken', (req, res) => {
+  const { authCode, refreshToken, grantType } = req.body || {};
+  const isRefresh = grantType === 'REFRESH_TOKEN' || !!refreshToken;
+  if (!isRefresh && !authCode) {
+    const fail = { result: { resultStatus: 'F', resultCode: 'AUTH_CODE_INVALID', resultMessage: 'authCode missing' } };
+    logTest('alipayplus', 'authorizations/applyToken', 'FAIL', 'missing authCode', req.body, fail);
+    return res.status(400).json(fail);
+  }
+  const response = {
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Success' },
+    accessToken: `ACCESS_${Math.random().toString(36).slice(2, 20).toUpperCase()}`,
+    accessTokenExpiryTime: new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString(),
+    refreshToken: `REFRESH_${Math.random().toString(36).slice(2, 20).toUpperCase()}`,
+    refreshTokenExpiryTime: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
+    customerId: `CUST_${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+    userLoginId: '138****5678'
+  };
+  logTest('alipayplus', 'authorizations/applyToken', 'PASS', isRefresh ? 'refresh' : `authCode=${String(authCode).slice(0,8)}...`, req.body, response);
+  res.json(response);
+});
+
+// AUTO DEBIT: step 4 — authorizations/cancelToken (unbind)
+app.post('/api/alipayplus/authorizations/cancelToken', (req, res) => {
+  const response = {
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Token revoked' },
+    accessToken: req.body?.accessToken || null
+  };
+  logTest('alipayplus', 'authorizations/cancelToken', 'PASS', 'token revoked', req.body, response);
+  res.json(response);
+});
+
+// AUTO DEBIT: step 5 — pay with accessToken (recurring charge)
+app.post('/api/alipayplus/payWithToken', (req, res) => {
+  const { accessToken, paymentAmount, paymentRequestId } = req.body || {};
+  if (!accessToken) {
+    const fail = { result: { resultStatus: 'F', resultCode: 'ACCESS_TOKEN_INVALID', resultMessage: 'accessToken missing' } };
+    logTest('alipayplus', 'payWithToken', 'FAIL', 'missing accessToken', req.body, fail);
+    return res.status(400).json(fail);
+  }
+  const paymentId = `AP_AUTO_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const response = {
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Payment processed' },
+    paymentId,
+    paymentRequestId: paymentRequestId || `req-${Date.now()}`,
+    paymentAmount: paymentAmount || { value: '1000', currency: 'USD' },
+    paymentStatus: 'SUCCESS',
+    paymentTime: new Date().toISOString()
+  };
+  logTest('alipayplus', 'payWithToken', 'PASS', `${paymentId} via ${String(accessToken).slice(0,10)}...`, req.body, response);
+  res.json(response);
+});
+
+// MERCHANT-PRESENTED MODE: pay (returns codeValue that merchant renders as QR)
+app.post('/api/alipayplus/pay/mpm', (req, res) => {
+  const { paymentAmount, paymentRequestId, order } = req.body || {};
+  const paymentId = `AP_MPM_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const codeValue = `https://qr.alipay.com/${paymentId.toLowerCase()}`;
+  const response = {
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Order code generated' },
+    paymentId,
+    paymentRequestId: paymentRequestId || `req-${Date.now()}`,
+    paymentAmount: paymentAmount || { value: '15330', currency: 'HKD' },
+    codeDetails: {
+      codeValue,
+      codeType: 'ORDER_CODE',
+      displayType: 'BIG_QR',
+      expireTime: new Date(Date.now() + 3 * 60 * 1000).toISOString()
+    },
+    order: order || null
+  };
+  logTest('alipayplus', 'pay/mpm', 'PASS', `${paymentId} qr=${codeValue}`, req.body, response);
+  res.json(response);
+});
+
+// USER-PRESENTED MODE: pay (acquirer scans user's wallet code, submits to Alipay+)
+app.post('/api/alipayplus/pay/upm', (req, res) => {
+  const { paymentCode, paymentAmount, paymentRequestId } = req.body || {};
+  const code = String(paymentCode || '').trim();
+  // Alipay+ UPM rule: 17-24 digits, starts with 25/26/27/28/29/30 (PDF slide 31)
+  const valid = /^(2[5-9]|30)\d{15,22}$/.test(code);
+  if (!valid) {
+    const fail = {
+      result: { resultStatus: 'F', resultCode: 'PAYMENT_CODE_INVALID',
+        resultMessage: 'Alipay+ wallet codes are 17-24 digits and must start with 25, 26, 27, 28, 29, or 30.' },
+      paymentCodeReceived: code || '(empty)'
+    };
+    logTest('alipayplus', 'pay/upm', 'FAIL', `rejected code=${code.slice(0,6)}...`, req.body, fail);
+    return res.status(400).json(fail);
+  }
+  const paymentId = `AP_UPM_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const response = {
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Payment captured' },
+    paymentId,
+    paymentRequestId: paymentRequestId || `req-${Date.now()}`,
+    paymentAmount: paymentAmount || { value: '15330', currency: 'HKD' },
+    paymentStatus: 'SUCCESS',
+    paymentTime: new Date().toISOString(),
+    walletBrandName: 'AlipayHK',
+    paymentCodePrefix: code.slice(0, 2)
+  };
+  logTest('alipayplus', 'pay/upm', 'PASS', `${paymentId} prefix=${code.slice(0,2)}`, req.body, response);
+  res.json(response);
+});
+
+// COMMON: cancelPayment (flip status to CANCELLED)
+app.post('/api/alipayplus/cancelPayment', (req, res) => {
+  const response = {
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Payment cancelled' },
+    paymentId: req.body?.paymentId || null,
+    cancelTime: new Date().toISOString(),
+    paymentStatus: 'CANCELLED'
+  };
+  logTest('alipayplus', 'cancelPayment', 'PASS', `paymentId=${response.paymentId}`, req.body, response);
+  res.json(response);
+});
+
+// COMMON: notifyPayment simulator — Alipay+ -> Acquirer webhook
+// Called from the UI so PMs can see the async notification payload explicitly.
+app.post('/api/alipayplus/notifyPayment/simulate', (req, res) => {
+  const { paymentId, paymentStatus, product } = req.body || {};
+  const notification = {
+    notifyType: 'PAYMENT_RESULT',
+    result: { resultStatus: 'S', resultCode: 'SUCCESS', resultMessage: 'Success' },
+    paymentId: paymentId || `AP_SIM_${Date.now()}`,
+    paymentRequestId: req.body?.paymentRequestId || `req-${Date.now()}`,
+    paymentStatus: paymentStatus || 'SUCCESS',
+    paymentAmount: req.body?.paymentAmount || { value: '15330', currency: 'HKD' },
+    paymentTime: new Date().toISOString(),
+    acquirerResponseRequired: true,
+    retryPolicy: { intervals: ['2m','10m','10m','1h','2h','6h','15h'], maxAttempts: 7 }
+  };
+  logTest('alipayplus', 'notifyPayment', 'PASS', `${product||'cashier'} -> acquirer webhook`, req.body, notification);
+  res.json(notification);
 });
 
 // ============== WECHAT PAY ROUTES (Realistic Mocks) ==============
@@ -669,19 +1054,115 @@ app.post('/api/paypal/paylater-order', async (req, res) => {
 });
 
 app.post('/api/zepto/agreement', async (req, res) => {
-  const agreementId = `ZPT_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  res.json({
-    id: agreementId,
-    status: 'pending_authorization',
-    paymentMethod: 'payto',
-    _raw: {
-      uid: agreementId,
-      status: 'pending_authorization',
-      authorization_url: `https://go.sandbox.zeptopayments.com/authorize/${agreementId}`,
-      type: 'payto_agreement',
-      channels: ['new_payments_platform'],
+  try {
+    const { amount, currency, merchantOrderId } = req.body || {};
+    const accessToken = await getZeptoAccessToken();
+    if (!accessToken) {
+      // Fall back to mock mode if not authorized — logs a warning so dev sees why
+      console.warn('[Zepto] No access token available, returning mock response. Visit /zepto-setup.html to enable live mode.');
+      const agreementId = `ZPT_MOCK_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      return res.json({
+        id: agreementId,
+        status: 'pending_authorization',
+        paymentMethod: 'payto',
+        mode: 'mock',
+        _raw: {
+          uid: agreementId,
+          status: 'pending_authorization',
+          authorization_url: `${ZEPTO_OAUTH_BASE}/authorize/${agreementId}`,
+          type: 'payto_agreement',
+          channels: ['new_payments_platform'],
+        },
+      });
     }
-  });
+
+    // Build PayTo agreement payload (Zepto API v20250101)
+    // Amount is in cents per Zepto docs; default to $100 if not provided
+    const maxAmountCents = String(amount || 10000);
+    const uniqueUid = (merchantOrderId || `SDK-${Date.now()}`).slice(0, 35);
+    const agreementPayload = {
+      uid: uniqueUid,
+      purpose: 'retail',
+      description: 'APM Checkout SDK live sandbox test agreement',
+      payment_terms: {
+        type: 'variable',
+        maximum_amount: maxAmountCents,
+        frequency: 'adhoc',
+      },
+      debtor: {
+        party_name: 'APM SDK Test Customer',
+        account_identifier: { type: 'payid', value: 'apm-sdk-test@zepto.sandbox' },
+      },
+    };
+
+    console.log('[Zepto] POST', `${ZEPTO_API_BASE}/payto/agreements`, 'payload:', JSON.stringify(agreementPayload));
+    const zeptoResp = await fetch(`${ZEPTO_API_BASE}/payto/agreements`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Zepto-API-Version': '20250101',
+      },
+      body: JSON.stringify(agreementPayload),
+    });
+    // Read raw text first so we can see the actual response even if it's not valid JSON
+    const rawText = await zeptoResp.text();
+    console.log('[Zepto]', zeptoResp.status, zeptoResp.statusText, 'headers:', JSON.stringify(Object.fromEntries(zeptoResp.headers.entries())));
+    console.log('[Zepto] raw body:', rawText.slice(0, 800) || '(empty body)');
+
+    let data;
+    try {
+      data = rawText ? JSON.parse(rawText) : {};
+    } catch (parseErr) {
+      return res.status(502).json({
+        error: 'Zepto returned non-JSON response',
+        status: zeptoResp.status,
+        statusText: zeptoResp.statusText,
+        rawBody: rawText.slice(0, 500),
+        contentType: zeptoResp.headers.get('content-type'),
+      });
+    }
+
+    if (!zeptoResp.ok) {
+      // Special case: 403 with empty body means the Zepto sandbox account
+      // doesn't have API data-product entitlements enabled yet (account-level
+      // block, not token/scope issue). Surface a helpful message.
+      if (zeptoResp.status === 403 && (!rawText || rawText.trim() === '')) {
+        return res.status(403).json({
+          error: 'Zepto sandbox account not entitled for API access',
+          status: 403,
+          hint: 'The OAuth token is valid and has payto_agreements:write scope, but Zepto\'s upstream rejected the request with an empty 403. This typically means the sandbox account needs API/PayTo product enablement — contact Zepto support or enable PayTo products in the sandbox dashboard.',
+          requestId: zeptoResp.headers.get('x-request-id'),
+        });
+      }
+      return res.status(zeptoResp.status).json({
+        error: 'Zepto API error',
+        status: zeptoResp.status,
+        statusText: zeptoResp.statusText,
+        details: data,
+      });
+    }
+
+    const agreement = data.data || data;
+    res.json({
+      id: agreement.uid,
+      status: agreement.state || 'pending_authorization',
+      paymentMethod: 'payto',
+      mode: 'live-sandbox',
+      _raw: {
+        uid: agreement.uid,
+        status: agreement.state,
+        authorization_url: agreement.authorization_url || `${ZEPTO_OAUTH_BASE}/authorize/${agreement.uid}`,
+        type: 'payto_agreement',
+        channels: ['new_payments_platform'],
+        zepto_response: agreement,
+      },
+    });
+  } catch (err) {
+    console.error('[Zepto] agreement error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Apple Pay config
@@ -791,7 +1272,7 @@ app.get('/api/health', async (req, res) => {
     affirm: 'mock',
     paypal: 'mock',
     'paypal-paylater': 'mock',
-    zepto: 'mock',
+    zepto: zeptoAccessToken ? 'live-sandbox' : (loadZeptoRefreshToken() ? 'configured' : (ZEPTO_CLIENT_ID ? 'needs-bootstrap' : 'mock')),
     applepay: 'sandbox',  // merchant cert: merchant.app.vercel.hottopic
     googlepay: 'mock',
   };
@@ -986,6 +1467,16 @@ app.listen(PORT, () => {
   console.log(`   Klarna widget test:     http://localhost:${PORT}/klarna.html`);
   console.log(`   CashApp Pay test:       http://localhost:${PORT}/cashapp.html`);
   console.log(`   PPRO 52-APM test:       http://localhost:${PORT}/ppro.html`);
+  console.log(`   Alipay+ 4-flow demo:    http://localhost:${PORT}/alipayplus.html`);
   console.log(`   Health check:           http://localhost:${PORT}/api/health`);
-  console.log(`   Test results:           http://localhost:${PORT}/api/test-log\n`);
+  console.log(`   Test results:           http://localhost:${PORT}/api/test-log`);
+  // Zepto status
+  if (ZEPTO_CLIENT_ID) {
+    const hasRefresh = !!loadZeptoRefreshToken();
+    console.log(`   Zepto status:           ${hasRefresh ? 'configured (auto-refresh ready)' : 'needs bootstrap → http://localhost:' + PORT + '/zepto-setup.html'}`);
+    console.log(`   Zepto client id:        ${ZEPTO_CLIENT_ID.slice(0, 8)}... (loaded from .env)`);
+  } else {
+    console.log(`   Zepto status:           NOT CONFIGURED (set ZEPTO_CLIENT_ID in test-harness/.env)`);
+  }
+  console.log('');
 });

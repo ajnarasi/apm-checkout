@@ -232,12 +232,26 @@ Partial refund: 1 Widget A ($20.00) of 2</div>
     }
 
     async function placeOrder() {
-      document.getElementById('btn-order').disabled = true;
+      const orderBtn = document.getElementById('btn-order');
+      orderBtn.disabled = true;
       updateStep(2, 'active', 'Authorizing with Klarna...');
+
+      // Safety net: if the Klarna SDK callback never fires (e.g., the user clicks
+      // before selecting a payment method in the widget, or the third-party iframe
+      // is in an unexpected state), re-enable the button after 30s so the user
+      // isn't permanently stuck.
+      let callbackFired = false;
+      const watchdog = setTimeout(() => {
+        if (callbackFired) return;
+        updateStep(2, 'fail', 'Klarna SDK did not respond within 30s. Make sure you selected a payment method in the widget above, then click Place Order again.');
+        orderBtn.disabled = false;
+      }, 30000);
 
       Klarna.Payments.authorize({
         payment_method_category: 'klarna'
       }, {}, async function(res) {
+        callbackFired = true;
+        clearTimeout(watchdog);
         if (res.approved) {
           authToken = res.authorization_token;
           updateStep(2, 'pass', `Authorized! auth_token: ${authToken?.substring(0, 30)}...`);
@@ -275,11 +289,16 @@ Partial refund: 1 Widget A ($20.00) of 2</div>
             updateStep(3, 'fail', `Error: ${err.message}`);
           }
         } else if (res.show_form) {
-          updateStep(2, 'active', 'Authorization pending — complete the Klarna form above');
+          updateStep(2, 'active', 'Authorization pending — complete the Klarna form above, then click Place Order again');
           document.getElementById('btn-order').disabled = false;
         } else {
-          updateStep(2, 'fail', `Authorization failed: ${JSON.stringify(res)}`);
+          // Klarna SDK returned an unexpected shape (neither approved nor show_form).
+          // Surface the raw response and re-enable the button so the user can retry
+          // after fixing whatever caused the failure (most often: no payment method
+          // selected in the Klarna iframe yet).
+          updateStep(2, 'fail', `Authorization failed: ${JSON.stringify(res)}\nClick Place Order again to retry once the Klarna widget is ready.`);
           addFieldCheck('mapping-results', 'Klarna authorization', 'approved=true', `approved=${res.approved}`, false);
+          document.getElementById('btn-order').disabled = false;
         }
       });
     }

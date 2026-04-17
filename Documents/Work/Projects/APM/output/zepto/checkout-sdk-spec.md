@@ -130,6 +130,38 @@
 }
 ```
 
+## Section D1: One-Time OAuth Bootstrap (Live Sandbox)
+
+Zepto uses the OAuth 2.0 **authorization_code** grant — not `client_credentials`. To bootstrap a live sandbox integration, run this one-time manual flow (the setup UI is at `http://localhost:3847/zepto-setup.html`):
+
+1. **Configure credentials** — add to `test-harness/.env`:
+   ```
+   ZEPTO_CLIENT_ID=<your sandbox client id>
+   ZEPTO_CLIENT_SECRET=<your sandbox client secret>
+   ZEPTO_REDIRECT_URI=urn:ietf:wg:oauth:2.0:oob
+   ```
+
+2. **Start the server**: `node test-harness/server.js` — the startup banner will show `Zepto status: needs bootstrap`.
+
+3. **Open the setup page**: `http://localhost:3847/zepto-setup.html`
+
+4. **Click "Open Zepto Authorization"** — opens the Zepto sandbox login page in a new tab. The URL format is:
+   ```
+   https://go.sandbox.zeptopayments.com/oauth/authorize
+     ?response_type=code
+     &client_id={ZEPTO_CLIENT_ID}
+     &redirect_uri=urn:ietf:wg:oauth:2.0:oob
+     &scope=offline_access+pay_to_agreements+pay_to_payments+payments+contacts
+   ```
+
+5. **Log in and authorize** — Zepto displays a one-time code on the page (out-of-band flow).
+
+6. **Paste the code** into the setup page and click **Complete Setup**. The server exchanges it for an access token + refresh token and stores the refresh token in `test-harness/.zepto-tokens.json` (gitignored).
+
+7. **Done** — access tokens auto-refresh every ~2 hours. Refresh tokens are single-use and rotated on every refresh.
+
+After bootstrap, `POST /api/zepto/agreement` makes real calls to `https://api.sandbox.zeptopayments.com/payto/agreements` with a `Bearer` access token.
+
 ## Section E: Sandbox Test Data
 
 | Scenario | Test Data | Expected Result |

@@ -2,12 +2,40 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "apm-v2-harness",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace", "@commercehub/reference-server"],
+      "port": 3849,
+      "cwd": "checkout-sdk-v2",
+      "env": {
+        "HARNESS_MODE": "true",
+        "NODE_ENV": "development",
+        "PORT": "3849",
+        "CORS_ORIGINS": "http://localhost:3849,http://127.0.0.1:3849",
+        "INSTANCE_COUNT": "1"
+      }
+    },
+    {
       "name": "apm-test-harness",
       "runtimeExecutable": "node",
       "runtimeArgs": ["server.js"],
       "port": 3847,
       "cwd": "test-harness",
       "autoPort": false
+    },
+    {
+      "name": "fiserv-brain-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "cwd": "Fiserv Brain/05-prototypes/fiserv-brain-demo"
+    },
+    {
+      "name": "fiserv-brain-exec-brief",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server", "-p", "3100", "-c-1", "--silent"],
+      "port": 3100,
+      "cwd": "Fiserv Brain/05-prototypes/exec-brief"
     }
   ]
 }
